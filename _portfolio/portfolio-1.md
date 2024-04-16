@@ -1,6 +1,6 @@
 ---
-title: "Portfolio item number 1"
-excerpt: "Short description of portfolio item number 1<br/><img src='/images/500x300.png'>"
+title: "Prompt Intent Detection"
+excerpt: "A scalable system to detect malicious prompts with a rapidly built GUI 1<br/><img src='/images/mal_prompt.jpg'>"
 collection: portfolio
 ---
 
