@@ -1,6 +1,6 @@
 ---
 title: 'Continual Learning: Which metrics are important?'
-date: 2012-08-14
+date: 2024-04-16
 permalink: /posts/2024/04/16/CL-metrics/
 tags:
   - MLOPS
