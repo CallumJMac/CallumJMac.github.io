@@ -21,12 +21,12 @@ repository               : "CallumJMac/CallumJMac.github.io"
 #               Additional customization can be done by editing /_includes/author-profile.html
 author:
   # Biographic information
-  avatar           : "profile_callumjmac.png"
+  avatar           : "profile_callumjmac.jpeg"
   name             : "Callum J Macpherson"
   pronouns         : # example: "she/her"  
   bio              : "Machine Learning"
   location         : "London, UK"
-  employer         : "Job Hunting"
+  employer         : "Freelance / Self Employed"
   uri              : # URL
   email            : "callumjmac@outlook.com" 
 
