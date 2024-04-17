@@ -13,7 +13,7 @@ main:
     url: /portfolio/
         
   - title: "Blog Posts"
-    url: /https://medium.com/@callumjmac
+    url: https://medium.com/@callumjmac
     
   # - title: "CV"
   #   url: /cv/
