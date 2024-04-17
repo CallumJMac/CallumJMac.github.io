@@ -11,12 +11,12 @@ redirect_from:
 
 💻 I am passionate about building scalable full stack machine learning enabled systems.
 
-👨‍⚕️ My Master's thesis was on Fully Automated Hand Tracking for Parkinson's Disease Diagnosis with a custom Pose Estimation model designed by me!
+👨‍⚕️ My MSc thesis was on 'Fully Automated Hand Tracking for Parkinson's Disease Diagnosis' with a custom pose estimation model for tracking finger movements!
 
 ## Learning Publicly
 
 In my experience so far, I discovered that it is far easier to learn and improve ML skills due to the abundance of blogs and online resources available.
 
-Therefore, I am making an endeavour to publicly share projects that I complete and create online resources to help others learn machine learning in an intuitive and informative way.
+Therefore, I am making an endeavour to publicly share projects that I complete and create online resources to help others learn ML in an intuitive and informative way.
 
-If you are interested in getting in touch or have any questions - please get in touch on [LinkedIn](https://www.linkedin.com/in/callumjmac/)!
+If you are interested in getting in touch or have any questions - please message me on [LinkedIn](https://www.linkedin.com/in/callumjmac/)!
