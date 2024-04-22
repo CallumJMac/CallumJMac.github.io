@@ -1,11 +1,11 @@
 ---
-title: 'Continual Learning: Which metrics are important?'
-date: 2024-04-16
-permalink: /posts/2024/04/16/CL-metrics/
+title: 'Malicious LLM Prompt Detection in Python'
+date: 2024-04-22
+permalink: /posts/2024/04/22/LLM-prompt-detection/
 tags:
-  - MLOPS
-  - distribution drift
-  - continual learning
+  - LLM
+  - safety
+  - text classification
 ---
 
 I have uploaded the complete code (Python and Jupyter notebook) on GitHub: https://github.com/CallumJMac/prompt_classification
