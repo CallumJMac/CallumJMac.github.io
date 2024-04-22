@@ -323,6 +323,6 @@ deactivate
 
 ### Conclusion
 This tutorial has demonstrated how to apply text classification to detect malicious prompts in an LLM pipeline. We have looked at traditional ML methods applied to a classic problem in NLP. We created a baseline model with strong performance and identified areas of improvement for future work. Feel free to use this code for your own projects, and suggest further improvements.
-Again, here is a link to the Github: https://github.com/CallumJMac/prompt_classification
-
+Again, here is a link to the [Github](https://github.com/CallumJMac/prompt_classification
+)
 Thanks for reading😎
