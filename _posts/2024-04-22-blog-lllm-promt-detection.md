@@ -8,7 +8,7 @@ tags:
   - text classification
 ---
 
-I have uploaded the complete code (Python and Jupyter notebook) on GitHub: https://github.com/CallumJMac/prompt_classification
+I have uploaded the complete code (Python and Jupyter notebook) on [GitHub](https://github.com/CallumJMac/prompt_classification)
 
 *Disclaimer: I am new to blogging. So, if there are any mistakes, please do let me know. All feedback is appreciated.*
 
@@ -65,8 +65,8 @@ python3 -m venv <environment_name>
 <environment_name>\Scripts\activate
 # On Unix or MacOS
 source <environment_name>/bin/activate
-
 ```
+
 - Install Dependencies: Install project dependencies using pip. You can do this by using the requirements.txt file.
 
 ```bash
@@ -136,7 +136,7 @@ Let’s inspect a sample of the data:
 data_train.head()
 ```
 
-[Figure 1: data_train.head() output](images\1_malicious_prompts\data_head.png)
+![Figure 1: data_train.head() output](images\1_malicious_prompts\data_head.png)
 
 We have our raw prompts in the text column and our label which is the classification if the prompt is malicious or not.
 
@@ -154,7 +154,7 @@ data_test.rename(columns={"text":"prompt"}, inplace=True)
 # Plot the frequency of each class in our training data
 sns.countplot(x='label',data=data_train)
 ```
-[Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious.](images\1_malicious_prompts\fig2.png)
+![Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious.](images\1_malicious_prompts\fig2.png)
 
 The previous figure shows the distribution of each label class among the data samples, where we can observe a dominant label of benign samples with a smaller set of injected prompts.
 
@@ -171,9 +171,8 @@ y_test = data_test['label']
 # Check number of training and testing samples
 print(f"# of Training Samples: {len(x_train)}")
 print(f"# of Testing Samples: {len(x_test)}")
-
 ```
-[Figure 3: # of training and testing samples in our data](images\1_malicious_prompts\fig3.png)
+![Figure 3: # of training and testing samples in our data](images\1_malicious_prompts\fig3.png)
 
 
 ### 3. Clean and preprocess the raw text data
@@ -213,7 +212,6 @@ def preprocess(text):
 # Apply the preprocessing function to our text data
 x_train = x_train.apply(preprocess)
 x_test = x_test.apply(preprocess)
-
 ```
 
 ### 4. Build the NLP pipeline and train the model
@@ -302,7 +300,7 @@ Now that we have trained our models, let’s have a look at the results.
 results_df
 ```
 
-[Figure 4: NLP Pipeline Evaluation Metric](images\1_malicious_prompts\fig4.png)
+![Figure 4: NLP Pipeline Evaluation Metric](images\1_malicious_prompts\fig4.png)
 
 Due to the design of our system, all models are take less than 0.6s to train and less than 0.02s for inference on our data. The slowest models to train are Gradient Boosting and Random Forest classifiers as these are model ensembles (more than 1 model).
 
