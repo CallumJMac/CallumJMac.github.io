@@ -136,7 +136,7 @@ Let’s inspect a sample of the data:
 data_train.head()
 ```
 
-![Figure 1: data_train.head() output](/images/1_malicious_prompts/data_head.png)
+![Figure 1: data_train.head() output](/images/1_malicious_prompts/data_head.jpg)
 
 We have our raw prompts in the text column and our label which is the classification if the prompt is malicious or not.
 
@@ -154,7 +154,7 @@ data_test.rename(columns={"text":"prompt"}, inplace=True)
 # Plot the frequency of each class in our training data
 sns.countplot(x='label',data=data_train)
 ```
-![Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious.](/images/1_malicious_prompts/fig2.png)
+![Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious.](/images/1_malicious_prompts/fig2.jpg)
 
 The previous figure shows the distribution of each label class among the data samples, where we can observe a dominant label of benign samples with a smaller set of injected prompts.
 
@@ -172,7 +172,7 @@ y_test = data_test['label']
 print(f"# of Training Samples: {len(x_train)}")
 print(f"# of Testing Samples: {len(x_test)}")
 ```
-![Figure 3: # of training and testing samples in our data](/images/1_malicious_prompts/fig3.png)
+![Figure 3: # of training and testing samples in our data](/images/1_malicious_prompts/fig3.jpg)
 
 
 ### 3. Clean and preprocess the raw text data
@@ -300,7 +300,7 @@ Now that we have trained our models, let’s have a look at the results.
 results_df
 ```
 
-![Figure 4: NLP Pipeline Evaluation Metric](/images/1_malicious_prompts/fig4.png)
+![Figure 4: NLP Pipeline Evaluation Metric](/images/1_malicious_prompts/fig4.jpg)
 
 Due to the design of our system, all models are take less than 0.6s to train and less than 0.02s for inference on our data. The slowest models to train are Gradient Boosting and Random Forest classifiers as these are model ensembles (more than 1 model).
 
