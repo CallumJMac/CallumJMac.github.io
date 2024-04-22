@@ -135,14 +135,15 @@ Let’s inspect a sample of the data:
 # Check training data set head
 data_train.head()
 ```
-
-![Figure 1: data_train.head() output](/images/1_malicious_prompts/data_head.jpg)
-
 <p align="center">
   <img src="/images/1_malicious_prompts/data_head.jpg" alt="Figure 1: data_train.head() output" />
   <br />
   <em>Figure 1: data_train.head() output</em>
 </p>
+
+<!-- ![Figure 1: data_train.head() output](/images/1_malicious_prompts/data_head.jpg) -->
+
+
 
 
 We have our raw prompts in the text column and our label which is the classification if the prompt is malicious or not.
