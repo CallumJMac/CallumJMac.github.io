@@ -13,7 +13,8 @@ main:
     url: https://github.com/CallumJMac
         
   - title: "Blog"
-    url: https://medium.com/@callumjmac
+    url : /blog/
+    # url: https://medium.com/@callumjmac
     
   # - title: "CV"
   #   url: /cv/
