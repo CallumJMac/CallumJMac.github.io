@@ -138,6 +138,13 @@ data_train.head()
 
 ![Figure 1: data_train.head() output](/images/1_malicious_prompts/data_head.jpg)
 
+<p align="center">
+  <img src="/images/1_malicious_prompts/data_head.jpg" alt="Figure 1: data_train.head() output" />
+  <br />
+  <em>Figure 1: data_train.head() output</em>
+</p>
+
+
 We have our raw prompts in the text column and our label which is the classification if the prompt is malicious or not.
 
 0 == not malicious (safe)
@@ -154,7 +161,14 @@ data_test.rename(columns={"text":"prompt"}, inplace=True)
 # Plot the frequency of each class in our training data
 sns.countplot(x='label',data=data_train)
 ```
-![Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious.](/images/1_malicious_prompts/fig2.jpg)
+<!-- ![Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious.](/images/1_malicious_prompts/fig2.jpg) -->
+
+<p align="center">
+  <img src="/images/1_malicious_prompts/fig2.jpg" alt="Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious." />
+  <br />
+  <em>Figure 2: Frequency counts for malicious and safe prompts. 0=safe, 1=malicious.</em>
+</p>
+
 
 The previous figure shows the distribution of each label class among the data samples, where we can observe a dominant label of benign samples with a smaller set of injected prompts.
 
@@ -172,7 +186,14 @@ y_test = data_test['label']
 print(f"# of Training Samples: {len(x_train)}")
 print(f"# of Testing Samples: {len(x_test)}")
 ```
-![Figure 3: # of training and testing samples in our data](/images/1_malicious_prompts/fig3.jpg)
+
+<p align="center">
+  <img src="/images/1_malicious_prompts/fig3.jpg" alt="Figure 3: # of training and testing samples in our data" />
+  <br />
+  <em>Figure 3: # of training and testing samples in our data</em>
+</p>
+
+<!-- ![Figure 3: # of training and testing samples in our data](/images/1_malicious_prompts/fig3.jpg) -->
 
 
 ### 3. Clean and preprocess the raw text data
@@ -300,7 +321,12 @@ Now that we have trained our models, let’s have a look at the results.
 results_df
 ```
 
-![Figure 4: NLP Pipeline Evaluation Metric](/images/1_malicious_prompts/fig4.jpg)
+<p align="center">
+  <img src="/images/1_malicious_prompts/fig4.jpg" alt="Sample Image" />
+  <br />
+  <em>Figure 4: NLP Pipeline Evaluation Metric.</em>
+</p>
+
 
 Due to the design of our system, all models are take less than 0.6s to train and less than 0.02s for inference on our data. The slowest models to train are Gradient Boosting and Random Forest classifiers as these are model ensembles (more than 1 model).
 
@@ -327,4 +353,4 @@ Again, here is a link to the [Github](https://github.com/CallumJMac/prompt_class
 ).
 
 
-Thanks for reading😎
+Thanks for reading 😎!
