@@ -345,7 +345,7 @@ We have a complex and multi-stage system with many interchangeable parts. Theref
 - **Component-wise evaluation**: for example compare embedding methods,  retrieval methods,  LLM response methods, and even the raw data sources.
 - **End-to-end evaluation**: assess the quality of the entire system.
 
-Further, I recommend writing unit tests that query an LLM with expected and actual responses from the RAG system. For example, we could use the following evaluation prompt, logic and unit test:
+Further, I recommend writing unit tests that query an LLM with expected and actual responses from the RAG system. For example, we could use the following evaluation prompt, logic and unit test pseudocode:
 
 ```python
 # Template for evaluation prompt
@@ -375,6 +375,8 @@ def test_retrieval_response():
         expected_response="a known fact in our data"
     )
 ```
+
+This would need to be formalised and developed further. However, it gives a good starting point for testing RAG systems 😇.
 
 There is a chance that a generous LLM might pass incorrect responses, therefore also consider negative test cases. I.e. assert that the expected response (one that is wrong) does not equal the actual response. 
 
