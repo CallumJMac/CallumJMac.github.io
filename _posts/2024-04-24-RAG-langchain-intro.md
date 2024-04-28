@@ -29,16 +29,25 @@ In natural language processing, Retrieval-Augmented Generation (RAG) has emerged
 
 Figure 2 shows an overview of RAG. The first step is data preparation (highlighted in yellow) in which you must:
 1) Collect raw data sources.
+
 2) Extract the raw text data (using OCR, PDF, web crawlers etc.).
+
 3) Split the text into appropriate length chunks.
+
 4) Compute an embedding to be stored in the vector database.
+
 
 Once the vector database has been created, you can query the system (highlighted in green):
 1) A user can query the system with raw text.
+
 2) An embedding is computed for the query.
+
 3) Search the vector database for contextually relevant data.
+
 4) Give the relevant context and query to an LLM
+
 5) Return a contextually enriched response to the user. 
+
 
 ### Understanding RAG and LangChain
 
