@@ -60,7 +60,6 @@ Steps:
 ```bash
 git clone <repository_url>
 cd <project_directory>
-
 ```
 - Create a Virtual Environment: Navigate to your project directory and create a new virtual environment using either virtualenv or venv. Replace <environment_name> with your desired environment name.
 
@@ -127,7 +126,6 @@ def load_documents():
 documents = load_documents() # Call the function
 # Inspect the contents of the first document as well as metadata
 print(documents[0]) 
-
 ```
 
 ### 3: Chunking
@@ -209,7 +207,6 @@ def save_to_chroma(chunks: list[Document]):
     # Persist the database to disk
     db.persist()
     print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
-
 ```
 
  I encourage experimentation with open-sourced models such as Llama3 (try the 8B parameter version first, especially if your system needs to be 100% local). If you are working on a very niche or nuanced use case, off-the-shelf embedding models may not be useful. Therefore, you might want to investigate fine-tuning the embedding model on the domain data to improve the retrieval quality. 
@@ -229,7 +226,6 @@ def generate_data_store():
 load_dotenv()
 # Generate the data store
 generate_data_store()
-
 ```
 
 
