@@ -1,7 +1,7 @@
 ---
-title: 'Implementing RAG in LangChain with Chroma: A Step-by-Step guide'
+title: 'Implementing RAG in LangChain with Chroma: A Step-by-Step Guide'
 date: 2024-04-24
-permalink: /posts/2024/04/22/LLM-prompt-detection/
+permalink: /posts/2024/04/22/RAG_intro/
 tags:
   - LLM
   - safety
@@ -10,6 +10,11 @@ tags:
 
 *Disclaimer: I am new to blogging. So, if there are any mistakes, please do let me know. All feedback is warmly appreciated.*
 
+<p align="center">
+  <img src="/images/2_rag/RAG.jpg" alt="“RAG EXPLAINED OVERVIEW RETRIEVAL AUGMENTED GENERATION" />
+  <br />
+  <em>Figure 1: AI Generated Image with the prompt "An AI Librarian retrieving relevant information"</em>
+</p>
 
 
 ## Introduction
@@ -19,10 +24,10 @@ In natural language processing, Retrieval-Augmented Generation (RAG) has emerged
 <p align="center">
   <img src="/images/2_rag/rag_overview.jpg" alt="“RAG EXPLAINED OVERVIEW RETRIEVAL AUGMENTED GENERATION" />
   <br />
-  <em>Figure 1: Retrieval Augmented Generation (RAG): overview</em>
+  <em>Figure 2: Retrieval Augmented Generation (RAG): overview</em>
 </p>
 
-Figure 1 shows an overview of RAG. The first step is data preparation (highlighted in yellow) in which you must:
+Figure 2 shows an overview of RAG. The first step is data preparation (highlighted in yellow) in which you must:
 1) Collect raw data sources.
 2) Extract the raw text data (using OCR, PDF, web crawlers etc.).
 3) Split the text into appropriate length chunks.
@@ -127,7 +132,7 @@ print(documents[0])
 
 ### 3: Chunking
 
-In RAG systems, "chunking" refers to the segmentation of input text into shorter and meaningful units. This enables the system to efficiently pinpoint and retrieve relevant pieces of information. The quality of chunks are **essential** to how effective your system will be.
+In RAG systems, "chunking" refers to the segmentation of input text into shorter and more meaningful units. This enables the system to efficiently pinpoint and retrieve relevant pieces of information. The quality of chunks are **essential** to how effective your system will be.
 
 The most important thing to consider when deciding a chunking strategy is the structure of the documents that you are loading into your vector database. If the documents contain similar-length paragraphs, it would be useful to consider this when determining the size of the chunk.
 
@@ -172,7 +177,7 @@ When deploying these systems to real-world applications, it is important to plot
 
 In order to turn your text data into embeddings, you need an *embedding model*. This is a pre-trained model to transform the text into a vector of numbers. This is a high-dimensional representation of the text in embedding space, where each dimension corresponds to a specifific semantic or syntactic feature of the word.
 
-The choice of the embedding model used impacts the overall efficacy of the system, however, [some engineers](https://gradientflow.substack.com/p/best-practices-in-retrieval-augmented) note that the choice of embedding model often has less of an impact than the choice of chunking strategy. Further, selecting the largest and most powerful LLMs is not always the most effective for creating the vector database. The same [engineers](https://gradientflow.substack.com/p/best-practices-in-retrieval-augmented) found that smaller models can outperform top-ranked state-of-the-art models for specific tasks. Therefore, you may be able to reduce computational cost without sacraficing on overall system effectiveness.
+The choice of the embedding model used impacts the overall efficacy of the system, however, [some engineers](https://gradientflow.substack.com/p/best-practices-in-retrieval-augmented) note that the choice of embedding model often has less of an impact than the choice of chunking strategy. Further, selecting the largest and most powerful LLMs is not always the most effective for creating the vector database. The same [engineers](https://gradientflow.substack.com/p/best-practices-in-retrieval-augmented) found that smaller models can outperform top-ranked state-of-the-art models for specific tasks. Therefore, you may be able to reduce computational cost without sacrificing on overall system effectiveness.
 
 In the example provided, I am using Chroma because it was designed for this use case. However, there are some [tools](https://github.com/pgvector/pgvector) to use relational databases such as PostgreSQL. We have used OpenAIEmbeddings API which requires an API key:
 
@@ -317,20 +322,20 @@ print(response_text)
 <p align="center">
   <img src="/images/2_rag/final_resp.JPG" alt="“YOLO RAG METHOD OVERVIEW/">
   <br />
-  <em>RAG System output to query: "Explain how the YOLO method works"</em>
+  <em>Figure 3: RAG System output to query: "Explain how the YOLO method works"</em>
 </p>
 
-The generated response accuractely describes YOLO using information retrieved from my thesis! The prototype has been built and seems to work well. There are several questions that we are now left with as engineers:
+The generated response (shown in Figure 3) accurately describes YOLO using information retrieved from my thesis! The prototype has been built and seems to work well. There are several questions that we are now left with as engineers:
 - How well does the system work?
 - How would we even go about quantifying how much better the RAG-enabled LLM was vs. the original LLM?
-- When finetuning the RAG parameters (such as chunking method, prompt template, LLM agent used) how do we know if the changes made have improved or worstened the responses?
+- When fine0tuning the RAG parameters (such as chunking method, prompt template, LLM agent used) how do we know if the changes made have improved or worsened the responses?
 
 ### 6: Evaluation
 
 We have created a prototype using arbitrary values. The next project we would need to undertake would be finding the optimal combination of chunking logic, embedding model, LLM response agent. Generative tasks such as this are extremely difficult to quantitatively evaluate. Therefore, we need to propose a method for this to be implemented in a future blog.
 
 We have a complex and multi-stage system with many interchangeable parts. Therefore, it is recommended that we undertake an evaluation of each component in isolation and end-to-end evaluation:
-- **Component-wise evaluation**: for example compare embedding methods,  retrieval methods,  LLM response methods, even the raw data sources.
+- **Component-wise evaluation**: for example compare embedding methods,  retrieval methods,  LLM response methods, and even the raw data sources.
 - **End-to-end evaluation**: assess the quality of the entire system.
 
 Further, I recommend writing unit tests that query an LLM with expected and actual responses from the RAG system. For example, we could use the following evaluation prompt, logic and unit test:
@@ -376,5 +381,7 @@ In this blog, I have introduced the concept of Retrieval-Augmented Generation an
 Original [RAG paper](https://arxiv.org/abs/2005.11).
 
 Connect with me on [LinkedIn](https://www.linkedin.com/in/callumjmac/) for enquiries.
+
+Blog on [Medium]().
 
 Thanks for reading 😎
