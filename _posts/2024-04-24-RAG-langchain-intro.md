@@ -229,7 +229,7 @@ generate_data_store()
 ```
 
 
- ### 5: Query the vector database and the LLM
+### 5: Query the vector database and the LLM
 
  First, we need to identify what question we need the answer from our PDF. The PDF used in this example was my MSc Thesis on using Computer Vision to automatically track hand movements to diagnose Parkinson's Disease. Therefore, let's ask the system to explain one of the methods used in the paper. I used an object detection method to predict bounding box coordinates around the hand in the image to remove unnecessary pixels, the method used was YOLOv4 (I still can't believe we are on YOLOv8 already😆). Therefore, we will ask the model to explain how the YOLO method works:
 
@@ -256,7 +256,9 @@ We have defined our query and prompt template. Let's put it all together!
 In RAG systems, finding the most useful and relevant information in the database as fast as possible are the two objectives you want to optimize for when finetuning. The main approaches for retrieving data from the vector database are:
 
 1) **Term-based matching**: identifies keywords from questions and matches them to relevant chunks using term statistics. This method is usually simpler and requires less preprocessing. 
+
 2) **Vector-similarity search**: computes a distance metric between the query vectors and indexed vectors in the database. This method is more effective typically for retrieving contextually relevant information to the prompt.
+
 3) **Hybrid search**: integrates term-based and vector similarity for more comprehensive results.
 
 In this example, we are going to use Vector-similarity search. However, it is strongly advised that the optimal method and parameters are found experimentally to tailor the system to your domain and use case. Some other tuneable parameters to be found experimentally are:
