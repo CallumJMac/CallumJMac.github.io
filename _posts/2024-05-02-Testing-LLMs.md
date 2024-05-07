@@ -1,5 +1,5 @@
 ---
-title: 'LLMs Evals: A general framework for custom evaluations'
+title: 'LLMs Evals: A General Framework for Custom Evaluations'
 date: 2024-05-07
 permalink: /posts/2024/05/07/LLM_evals/
 tags:
