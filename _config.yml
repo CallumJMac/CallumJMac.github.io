@@ -8,7 +8,7 @@
 
 # Basic Site Settings
 locale                   : "en-US"
-title                    : "CallumJMac's Homepage"
+title                    : "Homepage"
 title_separator          : "-"
 name                     : &name "Callum John Macpherson"
 description              : &description "personal description"

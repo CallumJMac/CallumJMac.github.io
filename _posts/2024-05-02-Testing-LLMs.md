@@ -21,7 +21,7 @@ tags:
 
 ## Introduction
 
-In a recent blog, I introduced the concept of testing Large Language Models (LLMs). However, testing Large Language Models (LLMs) is a complex topic that needs to be explored further. There are several considerations about testing Machine Learning models and specifically LLMs that must be considered when developing and deploying your application. In this blog I will propose a general framework that will serve as a minimum recommendation for testing applications that use LLMs, including conversational agents, retrieval augmented generation, and agents etc. 
+In a recent blog, I introduced the concept of testing Large Language Models (LLMs). However, testing LLMs is a complex topic that needs to be explored further. There are several considerations about testing Machine Learning models and specifically LLMs that must be considered when developing and deploying your application. In this blog I will propose a general framework that will serve as a minimum recommendation for testing applications that use LLMs, including conversational agents, retrieval augmented generation, and agents etc. 
 
 ### Traditional software vs. LLMs
 
