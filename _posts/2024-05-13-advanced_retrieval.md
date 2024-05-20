@@ -1,5 +1,5 @@
 ---
-title: 'Advanced Retrieval for Retrieval-Augmented Generation'
+title: '[DRAFT] Advanced Retrieval for Retrieval-Augmented Generation'
 date: 2024-05-17
 permalink: /posts/2024/05/07/LLM_evals/
 tags:
@@ -12,11 +12,11 @@ tags:
 
 *Disclaimer: I am new to blogging. So, if there are any mistakes, please do let me know. All feedback is warmly appreciated.*
 
-<p align="center">
+<!-- <p align="center">
   <img src="/images/3_llm_evals/1.jpg" alt="“LLM EVALS HOW TO BUILD TESTING LARGE LANGUAGE MODELS" />
   <br />
   <em>Figure 1: AI Generated Image with the prompt "Small person testing an enormous and complex machine in the style of a marvel comic"</em>
-</p>
+</p> -->
 
 
 ## Introduction
