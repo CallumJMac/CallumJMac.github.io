@@ -174,7 +174,28 @@ Another effective method of query expansion involves generating multiple related
 2. Retrieve Results: Use the original query and the additional queries to retrieve results from the vector database.
 3. Aggregate and Process: Send all retrieved responses to the LLM for further processing.
 
-[CODE SNIPPET]
+```python
+def augment_multiple_query(query, model="gpt-3.5-turbo"):
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful expert financial research assistant. Your users are asking questions about an annual report. "
+            "Suggest up to five additional related questions to help them find the information they need, for the provided question. "
+            "Suggest only short questions without compound sentences. Suggest a variety of questions that cover different aspects of the topic."
+            "Make sure they are complete questions, and that they are related to the original question."
+            "Output one question per line. Do not number the questions."
+        },
+        {"role": "user", "content": query}
+    ]
+
+    response = openai_client.chat.completions.create(
+        model=model,
+        messages=messages,
+    )
+    content = response.choices[0].message.content
+    content = content.split("\n")
+    return content
+```
 
 
 The figure below illustrates this process: the red X represents the original query, while the orange X's represent the additional queries. This expansion helps ensure that more relevant information is retrieved, covering various aspects of the original query.
@@ -259,4 +280,102 @@ The table below has been produced to display the original order, cross-encoder s
 | 9                 | -7.0384283   | 4            |
 | 10                | -7.3246956   | 8            |
 
-By combining cross-encoder re-ranking with query expansion, retrieval-augmented generation systems can effectively extract and present the most contextually relevant information to the final LLM. This integrated approach maximizes the utility of retrieved results, particularly in scenarios involving extensive datasets or complex queries. Stay tuned for more insights into advanced retrieval methods that utilise user feedback to improve retrieval quality. 
+By combining cross-encoder re-ranking with query expansion, retrieval-augmented generation systems can effectively extract and present the most contextually relevant information to the final LLM. This integrated approach maximizes the utility of retrieved results, particularly in scenarios involving extensive datasets or complex queries. Stay tuned for more insights into advanced retrieval methods that utilise user feedback to improve retrieval quality.
+
+## Embedding Adaptors
+
+Another key method for enhancing the quality of retrieval systems is through the use of Embedding Adaptors. By leveraging user feedback on the relevancy of retrieved results, we can significantly enhance the performance of retrieval systems. Let's delve into how this process works and how you can implement it using PyTorch.
+
+An Embedding Adaptor is a transformation that is applied to your word embedding for your query. The main idea behind this is that you apply this transformation to your query embedding just after it is outputted from the embedding model, and before you execute your similarity search between your query and Vector Database. 
+
+
+### Preparing the dataset
+
+The core idea is to use user feedback to train your Embedding Adaptor to encourage the system to retrieve information that is more contextually relevant to your use case. Here is an outline of the process:
+1. **Data Collection**: Start by gathering a set of queries for your system. You could generate these using a LLM to get started.
+2. **Retrieve Initial Results**: Use your vector database to fetch results for each query.
+3. **Evaluate Results**: Utilize a thumbs-up or thumbs-down system (+1 or -1) to rate the relevance of each result. LLMs can be employed to synthesize this data.
+    - Relevant results are rated as +1.
+    - Irrelevant results are rated as -1.
+4. **Prepare Data Arrays**:
+    - **Adapter Query Embeddings**: The queries used in your system.
+    - **Adapter Document Embeddings**: The chunks retrieved from your vector database.
+    - **Adapter Labels**: The thumbs-up or thumbs-down ratings.
+5. **Transform and Organize Data**: Convert the data into PyTorch tensors and place them into a Torch dataset object.
+
+
+### Building the Embedding Adaptor Model
+
+A good baseline model is essentially just a matrix the same dimensions as your query embedding. You can initialise this with random numbers and we will update the values in a training loop. 
+
+The model architecture is straightforward yet powerful:
+
+- **Inputs**: Query embedding, document embedding, and adaptor matrix.
+- **Computation**: 
+    1. Update the query embedding by multiplying it with the adaptor matrix.
+    2. Calculate the cosine similarity between the updated query embedding and the document embedding.
+
+See the PyTorch code snippet below to see how simple it is to implement this:
+
+```python
+def embedding_adaptor_model(query_embedding, document_embedding, adaptor_matrix):
+    updated_query_embedding = torch.matmul(adaptor_matrix, query_embedding)
+    return torch.cosine_similarity(updated_query_embedding, document_embedding, dim=0)
+
+# Initialize the adaptor matrix
+mat_size = len(adapter_query_embeddings[0])
+adapter_matrix = torch.randn(mat_size, mat_size, requires_grad=True)
+
+```
+
+
+### Loss Function and Training
+
+- Loss Function: Use Mean Squared Error (MSELoss) to measure the difference between the model’s predictions and the actual labels.
+- Initialisation: Begin by using the shape of your query embedding with a random values for the Embedding Adaptor Matrix.
+- Training Efficiency: Training is fast as the model is bascially a single linear layer in a multilayer perceptron or artificial neural network, making it computationally light.
+
+See below the code snippet for calculating the loss in PyTorch:
+
+```python
+def mse_loss(query_embedding, document_embedding, adaptor_matrix, label):
+    return torch.nn.MSELoss()(embedding_adaptor_model(query_embedding, document_embedding, adaptor_matrix), label)
+```
+
+Now we have all the key components to train our Embedding Adaptor. Here is a simple training loop:
+
+```python
+min_loss = float('inf')
+best_matrix = None
+lr = 0.01
+
+for epoch in tqdm(range(100)):
+    for query_embedding, document_embedding, label in dataset:
+        loss = mse_loss(query_embedding, document_embedding, adapter_matrix, label)
+
+        if loss < min_loss:
+            min_loss = loss
+            best_matrix = adapter_matrix.clone().detach().numpy()
+
+        loss.backward()
+        with torch.no_grad():
+            adapter_matrix -= lr * adapter_matrix.grad
+            adapter_matrix.grad.zero_()
+```
+
+### Impact of the Embedding Adaptor
+
+The adaptor matrix plays a cruicial role in refining the query vector and emphasising the dimensions with high importance to the task, and minimising the dimensions with low importance to the task based on user feedback. How can you visualise the impact of the Embedding Adaptor?
+
+- Transformation Example: Create a test vector of with all values set to 1 and multiply this by the trained Embedding Adaptor Matrix and you can observed how the dimensions of the vector have been stretched and squeezed.
+- Dimensional Emphasis: The transformation that the Embedding Adaptor Matrix applies emphasizes the dimensions that are most relevant to the query and diminishes those that are less relevant (based on user feedback), thereby tailoring the feature vectors to improve retrieval accuracy.
+
+<p align="center">
+  <img src="/images/4_advanced retrieval/6.jpg" alt="" />
+  <br />
+  <em>Figure 7: Embedding Adaptor Matrix Visualised</em>
+</p>
+
+By implementing embedding adaptors, you can create a more responsive and accurate retrieval system that learns and adapts based on user feedback. This method not only enhances the relevance of retrieved results but also ensures that your system evolves continuously to meet user needs.
+
+Incorporate these steps and insights into your AI projects to witness a significant boost in performance and user satisfaction.
