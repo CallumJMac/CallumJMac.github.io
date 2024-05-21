@@ -1,7 +1,7 @@
 ---
-title: '[DRAFT] Advanced Retrieval for Retrieval-Augmented Generation'
-date: 2024-05-17
-permalink: /posts/2024/05/07/LLM_evals/
+title: 'Advanced Retrieval for Retrieval-Augmented Generation'
+date: 2024-05-21
+permalink: /posts/2024/05/21/LLM_evals/
 tags:
   - LLM
   - safety
@@ -10,13 +10,12 @@ tags:
   - Information Retrieval
 ---
 
-*Disclaimer: I am new to blogging. So, if there are any mistakes, please do let me know. All feedback is warmly appreciated.*
 
-<!-- <p align="center">
-  <img src="/images/3_llm_evals/1.jpg" alt="“LLM EVALS HOW TO BUILD TESTING LARGE LANGUAGE MODELS" />
+<p align="center">
+  <img src="/images/4_advanced retrieval/librarian.png" alt="“LLM EVALS HOW TO BUILD TESTING LARGE LANGUAGE MODELS" />
   <br />
-  <em>Figure 1: AI Generated Image with the prompt "Small person testing an enormous and complex machine in the style of a marvel comic"</em>
-</p> -->
+  <em>Figure 1: AI Generated Image with the prompt "A librarian searching for a book with a really large magnifying glass in an enormous library"</em>
+</p>
 
 
 ## Introduction
@@ -85,7 +84,7 @@ What is the main considerations for an Infomration Retrieval System? The informa
 <p align="center">
   <img src="/images/4_advanced retrieval/2.jpg" alt="" />
   <br />
-  <em>Figure 3: UMAP 2D Projection of an In scope query</em>
+  <em>Figure 3: UMAP Projection of an In scope query</em>
 </p>
 
 One might notice that the points on the 2D visualization don’t always align perfectly with their nearest neighbors in the original high-dimensional space. This discrepancy arises because the embedding model used lacks specific knowledge of the tasks or queries it’s being applied to. Thus, retrieving information for specific tasks can be more challenging when relying solely on a general representation.
@@ -107,20 +106,20 @@ In summary, while simple vector searches provide a foundational approach to retr
 
 Information retrieval has long been a crucial subfield of natural language processing (NLP), with numerous approaches developed to enhance the relevancy of query results. The advent of large language models (LLMs) has introduced powerful tools to augment and refine the queries sent to vector databases, significantly improving the quality of the results. In this section, we'll explore two main types of query expansion: expansion with generated answers and query expansion with multiple queries.
 
-### Query Expansion
+### Query Expansion with Example Answers
 
-https://arxiv.org/abs/2305.03653
+A novel approach to query expansion involves using LLMs to generate hypothetical or imagined responses to the initial query. This method leverages the model's ability to create contextually rich content, which can then be used to improve the retrieval process. For full details please refer to the [original paper](https://arxiv.org/abs/2305.03653).
 
-
-
-A novel approach to query expansion involves using LLMs to generate hypothetical or imagined responses to the initial query. This method leverages the model's ability to create contextually rich content, which can then be used to improve the retrieval process.
-
-[INSERT IMAGE TO UNDERSTAND ARCHITECTURE]
+<p align="center">
+  <img src="/images/4_advanced retrieval/Query Expansion with Generated Answers.png" alt="" />
+  <br />
+  <em>Figure 5: Query Expansion using Example Answers</em>
+</p>
 
 #### How It Works: 
-1. Generate a Response: Take the original query and prompt the LLM to generate a hypothetical answer. For example, you might use a prompt like: "You are an expert helpful financial research assistant. Provide an example answer to the given question, that might be found in a document like an annual report."
-2. Concatenate and Query: Combine the original query with the generated response and use this expanded query to search the vector database.
-3. Retrieve Results: Perform the retrieval as usual, but with the enhanced query.
+1. **Generate a Response**: Take the original query and prompt the LLM to generate a hypothetical answer. For example, you might use a prompt like: "You are an expert helpful financial research assistant. Provide an example answer to the given question, that might be found in a document like an annual report."
+2. **Concatenate and Query**: Combine the original query with the generated response and use this expanded query to search the vector database.
+3. **Retrieve Results**: Perform the retrieval as usual, but with the enhanced query.
 
 Please see below a code snippet to help you expand queries in your projects:
 
@@ -157,7 +156,7 @@ our corporate objectives.`
 <p align="center">
   <img src="/images/4_advanced retrieval/4.jpg" alt="" />
   <br />
-  <em>Figure 5: UMAP 2D Projection of Query Expansion</em>
+  <em>Figure 6: UMAP 2D Projection of Query Expansion with Example/Generated Answers</em>
 </p>
 
 The figure above illustrates this process: the red X represents the original query, while the orange X signifies the query with the hallucinated response (i.e. the expanded query). The geometrical proximity of the expanded query to the relevant information highlights why this method can extract more contextually appropriate results. The key takeaway from the figure below is that providing an expanded query with additional details about the desired format of the retrieved information can significantly alter the embedding from the original query to the expanded one.
@@ -167,12 +166,16 @@ In summary, by using an LLM to generate a plausible answer to the query, you can
 ### Query Expansion with Multiple Queries
 Another effective method of query expansion involves generating multiple related queries using an LLM. This approach diversifies the search and increases the likelihood of retrieving comprehensive information relevant to the original query.
 
-[INSERT IMAGE TO UNDERSTAND ARCHITECTURE]
+<p align="center">
+  <img src="/images/4_advanced retrieval/Query Expansion with Multiple Queries.png" alt="" />
+  <br />
+  <em>Figure 7:  Query Expansion with Multiple Queries</em>
+</p>
 
 #### How It Works:
-1. Generate Additional Queries: Prompt the LLM to suggest additional related questions. For instance: "You are a helpful expert financial research assistant. Your users are asking questions about an annual report. Suggest up to five additional related questions to help them find the information they need, for the provided question. Suggest only short questions without compound sentences. Suggest a variety of questions that cover different aspects of the topic. Make sure they are complete questions, and that they are related to the original question. Output one question per line. Do not number the questions."
-2. Retrieve Results: Use the original query and the additional queries to retrieve results from the vector database.
-3. Aggregate and Process: Send all retrieved responses to the LLM for further processing.
+1. **Generate Additional Queries**: Prompt the LLM to suggest additional related questions. For instance: "You are a helpful expert financial research assistant. Your users are asking questions about an annual report. Suggest up to five additional related questions to help them find the information they need, for the provided question. Suggest only short questions without compound sentences. Suggest a variety of questions that cover different aspects of the topic. Make sure they are complete questions, and that they are related to the original question. Output one question per line. Do not number the questions."
+2. **Retrieve Results**: Use the original query and the additional queries to retrieve results from the vector database.
+3. **Aggregate and Process**: Send all retrieved responses to the LLM for further processing.
 
 ```python
 def augment_multiple_query(query, model="gpt-3.5-turbo"):
@@ -203,12 +206,12 @@ The figure below illustrates this process: the red X represents the original que
 <p align="center">
   <img src="/images/4_advanced retrieval/5.jpg" alt="" />
   <br />
-  <em>Figure 6: UMAP 2D Projection of Query Expansion with Multiple Queries</em>
+  <em>Figure 8: UMAP 2D Projection of Query Expansion with Multiple Queries</em>
 </p>
 
 #### Considerations
-- Prompt Engineering: Crafting effective prompts is crucial as they become more complex and lengthy.
-- Redundancy: Multiple queries might retrieve overlapping information chunks from your vector database. It’s essential to manage and filter these to avoid redundancy.
+- **Prompt Engineering**: Crafting effective prompts is crucial as they become more complex and lengthy.
+- **Redundancy**: Multiple queries might retrieve overlapping information chunks from your vector database. It’s essential to manage and filter these to avoid redundancy.
 
 
 In summary, query expansion techniques, whether through generated answers or multiple related queries, significantly improve the effectiveness of retrieval-augmented generation systems. By leveraging the capabilities of LLMs, we can refine our search queries, leading to more accurate and contextually relevant results.
@@ -233,7 +236,11 @@ We want to obtain more retrieved embeddings from our VectorDB, for example we ma
 
 Unlike bi-encoders, which process sequences separately, cross-encoders process two input sequences together as a single input. This allows the model to directly compare and contrast the inputs, leading to a more integrated and nuanced understanding of their relationship.
 
-[CROSS ENCODER IMAGE]
+<p align="center">
+  <img src="/images/4_advanced retrieval/Cross-encoders.png" alt="" />
+  <br />
+  <em>Figure 9: Bi-encoder vs. Cross-encoder to generate </em>
+</p>
 
 ### Re-ranking with Query Expansion
 
@@ -252,7 +259,7 @@ for document in results['documents'][0]:
     print('')
 ```
 
-Then, use a Cross-Encoder to predict scores for each retrieved chunk of information. Re-rank the chunks based on the scores given and discard any chunks which are not contextually relevant to the prompt.
+Then, use a Cross-Encoder to predict scores for each retrieved chunk of information with the query. Re-rank the chunks based on the scores given and discard any chunks which are not contextually relevant to the prompt.
 
 ```python
 from sentence_transformers import CrossEncoder
@@ -286,8 +293,13 @@ By combining cross-encoder re-ranking with query expansion, retrieval-augmented 
 
 Another key method for enhancing the quality of retrieval systems is through the use of Embedding Adaptors. By leveraging user feedback on the relevancy of retrieved results, we can significantly enhance the performance of retrieval systems. Let's delve into how this process works and how you can implement it using PyTorch.
 
-An Embedding Adaptor is a transformation that is applied to your word embedding for your query. The main idea behind this is that you apply this transformation to your query embedding just after it is outputted from the embedding model, and before you execute your similarity search between your query and Vector Database. 
+An Embedding Adaptor is a transformation that is applied to your word embedding for your query. The main idea behind this is that you apply this transformation to your query embedding just after it is outputted from the embedding model, and before you execute your similarity search between your query and Vector Database as shown in the pipeline diagram below.
 
+<p align="center">
+  <img src="/images/4_advanced retrieval/embedding adaptor.png" alt="" />
+  <br />
+  <em>Figure 10: Embedding Adaptor</em>
+</p>
 
 ### Preparing the dataset
 
@@ -371,11 +383,17 @@ The adaptor matrix plays a cruicial role in refining the query vector and emphas
 - Dimensional Emphasis: The transformation that the Embedding Adaptor Matrix applies emphasizes the dimensions that are most relevant to the query and diminishes those that are less relevant (based on user feedback), thereby tailoring the feature vectors to improve retrieval accuracy.
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/6.jpg" alt="" />
+  <img src="/images/4_advanced retrieval/6.png" alt="" />
   <br />
-  <em>Figure 7: Embedding Adaptor Matrix Visualised</em>
+  <em>Figure 11: Embedding Adaptor Matrix Visualised</em>
 </p>
 
-By implementing embedding adaptors, you can create a more responsive and accurate retrieval system that learns and adapts based on user feedback. This method not only enhances the relevance of retrieved results but also ensures that your system evolves continuously to meet user needs.
+By implementing embedding adaptors, you can create a more responsive and accurate retrieval system that learns and adapts based on user feedback. This method not only enhances the relevance of retrieved results but also ensures that your system evolves continuously to meet user needs. As shown in the figure below, the original query embeddings are more scattered and the adapted queries are more concentrated. This is indicative that the adaptive query embeddings have clustered nearby areas of the vector database that are more relevant. This demonstrates how embedding adaptors are simple but powerful techniques for customizing query embeddings for a particular use case based and can utilise feedback from your application. 
+
+<p align="center">
+  <img src="/images/4_advanced retrieval/embedadapt_scatter.JPG" alt="" />
+  <br />
+  <em>Figure 12: Embedding Adaptor Matrix Visualised</em>
+</p>
 
 Incorporate these steps and insights into your AI projects to witness a significant boost in performance and user satisfaction.
