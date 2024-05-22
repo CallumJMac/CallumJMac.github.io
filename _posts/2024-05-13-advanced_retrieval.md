@@ -394,3 +394,14 @@ By implementing embedding adaptors, you can create a more responsive and accurat
 </p>
 
 Incorporate these steps and insights into your AI projects to witness a significant boost in performance and user satisfaction.
+
+## Conclusion
+
+In this blog post we have covered the following:
+- How to compute UMAP projections to visualise your Vector Database in 2 dimensions
+- Query expansion using generated answers
+- Query expansion with multiple prompts
+- Cross-encoder re-ranking
+- Embedding Adaptors
+
+This has been a summary of a [course](https://learn.deeplearning.ai/courses/advanced-retrieval-for-ai/lesson/1/introduction) I took and I have pushed the code to my [GitHub](https://github.com/CallumJMac/lessons/tree/main/6.%20Advanced%20Retrieval) if you would like to explore it further!
