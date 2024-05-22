@@ -9,7 +9,9 @@ tags:
   - Retrieval-augmented Generation (RAG)
   - Information Retrieval
 ---
+## Introduction
 
+In the ever-evolving landscape of information retrieval, relying solely on simple vector search methods often falls short of delivering effective results. While vectors that are semantically close in a particular embedding model may seem promising, they don't always guarantee optimal outcomes out of the box. This blog delves into the nuances of advanced retrieval techniques for Retrieval-Augmented Generation (RAG), shedding light on the underlying intuition, relevancy challenges, and the role of distractors.
 
 <p align="center">
   <img src="/images/4_advanced retrieval/librarian.png" alt="“LLM EVALS HOW TO BUILD TESTING LARGE LANGUAGE MODELS" />
@@ -17,10 +19,6 @@ tags:
   <em>Figure 1: AI Generated Image with the prompt "A librarian searching for a book with a really large magnifying glass in an enormous library"</em>
 </p>
 
-
-## Introduction
-
-In the ever-evolving landscape of information retrieval, relying solely on simple vector search methods often falls short of delivering effective results. While vectors that are semantically close in a particular embedding model may seem promising, they don't always guarantee optimal outcomes out of the box. This blog delves into the nuances of advanced retrieval techniques for Retrieval-Augmented Generation (RAG), shedding light on the underlying intuition, relevancy challenges, and the role of distractors.
 
 ## Intuition Behind Embedding Spaces
 To better grasp the concept of embedding spaces, it’s beneficial to visualize them. Embedding spaces can be quite abstract, commonly used embedding models such as BERT or OpenAI models have upwards of 348 to 3072 dimensions. However, to make sense of these high-dimensional spaces, we can project them down to two dimensions using a Python library called UMAP (Uniform Manifold Approximation and Projection).
@@ -70,7 +68,7 @@ plt.axis('off')
 ```
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/1.jpg" alt="" />
+  <img src="/images/4_advanced retrieval/1.png" alt="" />
   <br />
   <em>Figure 2: UMAP 2D Projection of 348 dimensional word embedding</em>
 </p>
@@ -82,7 +80,7 @@ plt.axis('off')
 What is the main considerations for an Infomration Retrieval System? The information that you retrieve is either going to be relevant or a distraction. Figure 3 shows a visualisation for an in-scope query and the retrieved chunks of information using a vector similarity matrix. The embedding for the query is shown by the red 'X'  and the retrieved embeddings are shown by the green 'O'.
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/2.jpg" alt="" />
+  <img src="/images/4_advanced retrieval/2.png" alt="" />
   <br />
   <em>Figure 3: UMAP Projection of an In scope query</em>
 </p>
@@ -95,7 +93,7 @@ In the realm of information retrieval, distractors refer to the irrelevant infor
 To visualize this, imagine the 2D embedding space as a cloud. A vector representing a query that lands outside this cloud will, by definition, find its nearest neighbors scattered throughout different points in the cloud. This geometrical intuition highlights why totally irrelevant queries can yield a wide array of retrieved information, as designed by the RAG system.
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/3.jpg" alt="" />
+  <img src="/images/4_advanced retrieval/3.png" alt="" />
   <br />
   <em>Figure 4: UMAP 2D Projection of an Out of Scope query</em>
 </p>
@@ -154,7 +152,7 @@ consistency in driving our strategic initiatives forward and achieving
 our corporate objectives.`
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/4.jpg" alt="" />
+  <img src="/images/4_advanced retrieval/4.png" alt="" />
   <br />
   <em>Figure 6: UMAP 2D Projection of Query Expansion with Example/Generated Answers</em>
 </p>
@@ -204,7 +202,7 @@ def augment_multiple_query(query, model="gpt-3.5-turbo"):
 The figure below illustrates this process: the red X represents the original query, while the orange X's represent the additional queries. This expansion helps ensure that more relevant information is retrieved, covering various aspects of the original query.
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/5.jpg" alt="" />
+  <img src="/images/4_advanced retrieval/5.png" alt="" />
   <br />
   <em>Figure 8: UMAP 2D Projection of Query Expansion with Multiple Queries</em>
 </p>
@@ -391,7 +389,7 @@ The adaptor matrix plays a cruicial role in refining the query vector and emphas
 By implementing embedding adaptors, you can create a more responsive and accurate retrieval system that learns and adapts based on user feedback. This method not only enhances the relevance of retrieved results but also ensures that your system evolves continuously to meet user needs. As shown in the figure below, the original query embeddings are more scattered and the adapted queries are more concentrated. This is indicative that the adaptive query embeddings have clustered nearby areas of the vector database that are more relevant. This demonstrates how embedding adaptors are simple but powerful techniques for customizing query embeddings for a particular use case based and can utilise feedback from your application. 
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/embedadapt_scatter.JPG" alt="" />
+  <img src="/images/4_advanced retrieval/embedadapt_scatter.png" alt="" />
   <br />
   <em>Figure 12: Embedding Adaptor Matrix Visualised</em>
 </p>
