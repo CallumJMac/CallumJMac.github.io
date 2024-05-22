@@ -1,7 +1,7 @@
 ---
 title: 'Advanced Retrieval for Retrieval-Augmented Generation'
 date: 2024-05-21
-permalink: /posts/2024/05/21/LLM_evals/
+permalink: /posts/2024/05/21/advanced_retrieval/
 tags:
   - LLM
   - safety
