@@ -294,7 +294,7 @@ Another key method for enhancing the quality of retrieval systems is through the
 An Embedding Adaptor is a transformation that is applied to your word embedding for your query. The main idea behind this is that you apply this transformation to your query embedding just after it is outputted from the embedding model, and before you execute your similarity search between your query and Vector Database as shown in the pipeline diagram below.
 
 <p align="center">
-  <img src="/images/4_advanced retrieval/embedding adaptor.png" alt="" />
+  <img src="/images/4_advanced retrieval/Embedding Adaptor.png" alt="" />
   <br />
   <em>Figure 10: Embedding Adaptor</em>
 </p>
@@ -335,7 +335,6 @@ def embedding_adaptor_model(query_embedding, document_embedding, adaptor_matrix)
 # Initialize the adaptor matrix
 mat_size = len(adapter_query_embeddings[0])
 adapter_matrix = torch.randn(mat_size, mat_size, requires_grad=True)
-
 ```
 
 
