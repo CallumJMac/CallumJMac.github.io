@@ -340,9 +340,9 @@ adapter_matrix = torch.randn(mat_size, mat_size, requires_grad=True)
 
 ### Loss Function and Training
 
-- Loss Function: Use Mean Squared Error (MSELoss) to measure the difference between the model’s predictions and the actual labels.
-- Initialisation: Begin by using the shape of your query embedding with a random values for the Embedding Adaptor Matrix.
-- Training Efficiency: Training is fast as the model is bascially a single linear layer in a multilayer perceptron or artificial neural network, making it computationally light.
+- **Loss Function**: Use Mean Squared Error (MSELoss) to measure the difference between the model’s predictions and the actual labels.
+- **Initialisation**: Begin by using the shape of your query embedding with a random values for the Embedding Adaptor Matrix.
+- **Training Efficiency**: Training is fast as the model is bascially a single linear layer in a multilayer perceptron or artificial neural network, making it computationally light.
 
 See below the code snippet for calculating the loss in PyTorch:
 
