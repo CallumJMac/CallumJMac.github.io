@@ -147,7 +147,7 @@ hypothetical_answer = augment_query_generated(original_query)
 joint_query = f"{original_query} {hypothetical_answer}"
 print(word_wrap(joint_query))
 ```
-Ouputs the following expanded query:
+Outputs the following expanded query:
 `Was there significant turnover in the executive team? Over the past
 fiscal year, there have been no significant turnovers within the
 executive team. The leadership continuity has provided stability and
@@ -344,8 +344,8 @@ adapter_matrix = torch.randn(mat_size, mat_size, requires_grad=True)
 ### Loss Function and Training
 
 - **Loss Function**: Use Mean Squared Error (MSELoss) to measure the difference between the model’s predictions and the actual labels.
-- **Initialisation**: Begin by using the shape of your query embedding with a random values for the Embedding Adaptor Matrix.
-- **Training Efficiency**: Training is fast as the model is bascially a single linear layer in a multilayer perceptron or artificial neural network, making it computationally light.
+- **Initialisation**: Begin by using the shape of your query embedding with random values for the Embedding Adaptor Matrix.
+- **Training Efficiency**: Training is fast as the model is basically a single linear layer in a multilayer perceptron or artificial neural network, making it computationally light.
 
 See below the code snippet for calculating the loss in PyTorch:
 
@@ -377,7 +377,7 @@ for epoch in tqdm(range(100)):
 
 ### Impact of the Embedding Adaptor
 
-The adaptor matrix plays a cruicial role in refining the query vector and emphasising the dimensions with high importance to the task, and minimising the dimensions with low importance to the task based on user feedback. How can you visualise the impact of the Embedding Adaptor?
+The adaptor matrix plays a crucial role in refining the query vector emphasising the dimensions with high importance to the task and minimising the dimensions with low importance to the task based on user feedback. How can you visualise the impact of the Embedding Adaptor?
 
 - Transformation Example: Create a test vector of with all values set to 1 and multiply this by the trained Embedding Adaptor Matrix and you can observed how the dimensions of the vector have been stretched and squeezed.
 - Dimensional Emphasis: The transformation that the Embedding Adaptor Matrix applies emphasizes the dimensions that are most relevant to the query and diminishes those that are less relevant (based on user feedback), thereby tailoring the feature vectors to improve retrieval accuracy.
