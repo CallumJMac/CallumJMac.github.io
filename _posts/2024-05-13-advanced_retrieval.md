@@ -9,9 +9,12 @@ tags:
   - Retrieval-augmented Generation (RAG)
   - Information Retrieval
 ---
+
+Please see the link to the GitHub Repo at the end of the post!
+
 ## Introduction
 
-In the ever-evolving landscape of information retrieval, relying solely on simple vector search methods often falls short of delivering effective results. While vectors that are semantically close in a particular embedding model may seem promising, they don't always guarantee optimal outcomes out of the box. This blog delves into the nuances of advanced retrieval techniques for Retrieval-Augmented Generation (RAG), shedding light on the underlying intuition, relevancy challenges, and the role of distractors.
+In the ever-evolving landscape of information retrieval, relying solely on simple vector search methods often falls short of delivering effective results. While vectors that are semantically close in a particular embedding model may seem promising, they don't always guarantee optimal outcomes out of the box. This blog delves into the nuances of advanced retrieval techniques for Retrieval-Augmented Generation (RAG), shedding light on the geometrical intuitions, challenges with chunk relevancy and noise, and how to enhance information retrieval using user feedback.
 
 <p align="center">
   <img src="/images/4_advanced retrieval/librarian.png" alt="“LLM EVALS HOW TO BUILD TESTING LARGE LANGUAGE MODELS" />
@@ -21,7 +24,7 @@ In the ever-evolving landscape of information retrieval, relying solely on simpl
 
 
 ## Intuition Behind Embedding Spaces
-To better grasp the concept of embedding spaces, it’s beneficial to visualize them. Embedding spaces can be quite abstract, commonly used embedding models such as BERT or OpenAI models have upwards of 348 to 3072 dimensions. However, to make sense of these high-dimensional spaces, we can project them down to two dimensions using a Python library called UMAP (Uniform Manifold Approximation and Projection).
+To better grasp the concept of embedding spaces, it’s beneficial to visualise them. Embedding spaces can be quite abstract, commonly used embedding models such as BERT or GPT models have upwards of 348 to 3072 dimensions. However, to make sense of these high-dimensional spaces, we can project them down to two dimensions using a Python library called UMAP (Uniform Manifold Approximation and Projection).
  
 ### Why UMAP?
 UMAP stands out from other dimensionality reduction techniques like PCA (Principal Component Analysis) or t-SNE (t-Distributed Stochastic Neighbor Embedding). While PCA focuses on finding dominant directions to project data, UMAP aims to preserve the structure of the data by maintaining the relative distances between points as much as possible. This characteristic makes UMAP particularly useful for understanding the geometric relationships within the embedding space.
@@ -90,7 +93,7 @@ One might notice that the points on the 2D visualization don’t always align pe
 ### Understanding Distractors
 In the realm of information retrieval, distractors refer to the irrelevant information retrieved that doesn’t pertain to the query. Diagnosing and debugging these distractors is a significant challenge for users, engineers, and developers alike.
 
-To visualize this, imagine the 2D embedding space as a cloud. A vector representing a query that lands outside this cloud will, by definition, find its nearest neighbors scattered throughout different points in the cloud. This geometrical intuition highlights why totally irrelevant queries can yield a wide array of retrieved information, as designed by the RAG system.
+To visualise this, imagine the 2D embedding space as a cloud. A vector representing a query that lands outside this cloud will, by definition, find its nearest neighbors scattered throughout different points in the cloud. This geometrical intuition highlights why totally irrelevant queries can yield a wide array of retrieved information, as designed by the RAG system.
 
 <p align="center">
   <img src="/images/4_advanced retrieval/3.png" alt="" />
@@ -98,7 +101,7 @@ To visualize this, imagine the 2D embedding space as a cloud. A vector represent
   <em>Figure 4: UMAP 2D Projection of an Out of Scope query</em>
 </p>
 
-In summary, while simple vector searches provide a foundational approach to retrieval, advanced techniques like UMAP offer deeper insights into embedding spaces, helping us understand and improve the relevancy of retrieved information. By visualizing and analyzing these high-dimensional spaces, we can better navigate the complexities of retrieval-augmented generation systems, ultimately enhancing their effectiveness and reliability. Stay tuned for further exploration into advanced retrieval methods in the upcoming sections.
+In summary, while simple vector searches provide a foundational approach to retrieval, advanced techniques like UMAP offer deeper insights into embedding spaces, helping us understand and improve the relevancy of retrieved information. By visualising and analysing these high-dimensional spaces, we can better navigate the complexities of retrieval-augmented generation systems, ultimately enhancing their effectiveness and reliability. Stay tuned for further exploration into advanced retrieval methods in the upcoming sections.
 
 ## Improving Retrieval
 
@@ -221,10 +224,10 @@ However, a big question remains... How can we rank the quality of information re
 One of the key challenges in information retrieval is assessing the relevancy of retrieved results based on the query inputted to the system. Cross-encoder re-ranking addresses this challenge by scoring the relevancy of retrieved results and reordering them to prioritize the most relevant ones.
 
 #### How it Works
-1. Querying the Vector Database: Initially, the system queries the vector database and retrieves a set of results.
-2. Requesting Additional Information: Rather than requesting only a few relevant pieces of information, request additional embeddings as irrelevant ones will later be discarded.
-3. Re-ranking: The retrieved results are re-ranked based on their relevancy to the original query. The most relevant results are given higher ranks.
-4. Selection: Finally, the top-ranking results are selected to be inputted to the LLM as context.
+1. **Querying the Vector Database**: Initially, the system queries the vector database and retrieves a set of results.
+2. **Requesting Additional Information**: Rather than requesting only a few relevant pieces of information, request additional embeddings as irrelevant ones will later be discarded.
+3. **Re-ranking**: The retrieved results are re-ranked based on their relevancy to the original query. The most relevant results are given higher ranks.
+4. **Selection**: Finally, the top-ranking results are selected to be inputted to the LLM as context.
 
 ### Obtain a "Long Tail" of results
 
