@@ -1,0 +1,23 @@
+export const SITE = {
+  website: "https://callumjmac.github.io/",
+  author: "Callum Macpherson",
+  profile: "https://github.com/CallumJMac",
+  desc: "AI engineer writing about production ML, language models, retrieval systems, and the engineering details that decide whether demos survive contact with users.",
+  title: "Callum Macpherson",
+  ogImage: "astropaper-og.jpg",
+  lightAndDarkMode: true,
+  postPerIndex: 4,
+  postPerPage: 4,
+  scheduledPostMargin: 15 * 60 * 1000,
+  showArchives: true,
+  showBackButton: true,
+  editPost: {
+    enabled: false,
+    text: "Edit page",
+    url: "https://github.com/CallumJMac/CallumJMac.github.io/edit/master/",
+  },
+  dynamicOgImage: true,
+  dir: "ltr",
+  lang: "en",
+  timezone: "Europe/London",
+} as const;

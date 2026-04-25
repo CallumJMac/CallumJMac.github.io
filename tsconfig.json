@@ -1,0 +1,13 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "public/pagefind", "talkmap", "_includes", "_layouts", "_sass", "assets", "markdown_generator", "_data", "_drafts", "_pages", "_portfolio", "_posts", "_publications", "_talks", "_teaching"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  }
+}
