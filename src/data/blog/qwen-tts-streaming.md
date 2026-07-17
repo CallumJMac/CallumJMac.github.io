@@ -96,7 +96,7 @@ The one-instance benchmark deployment also exposed a rolling-update trap. ECS tr
 
 I ran the official and CUDA-graph engines sequentially on the same `g5.xlarge`, using the 0.6B CustomVoice model, a fixed seed, and the same three inputs. Each condition had three warm-ups followed by 30 recorded runs.
 
-Endpoint latency used one isolated client container on the same EC2 host, with every request still traversing the ALB. TTFA starts immediately before sending the request on an established WebSocket and ends at the first binary audio frame, so it excludes public-internet and connection-setup latency.
+Endpoint latency used one isolated client container on the same EC2 host, with every request still traversing the ALB. TTFA starts immediately before sending the request on an established WebSocket and ends at the first binary audio frame, so it excludes public-internet and connection-setup latency. A separate [capacity study](/posts/qwen-tts-at-scale/) remeasured TTFA on a 20-prompt corpus under load; at concurrency one it reported **195ms p50** and **197ms p95**, slightly higher than these three-prompt endpoint runs.
 
 | Input              | Official RTF p50 | CUDA graph RTF p50 | Deployed TTFA p50 / p95 |
 | ------------------ | ---------------: | -----------------: | ----------------------: |
@@ -144,7 +144,7 @@ This is why I would not replace quality testing with a single latency number.
 
 This is a reproducible, deployable prototype, not a finished production service.
 
-- Generation is serialized to protect the shared engine. A separate [A10G capacity study](/posts/qwen-tts-at-scale/) found that this architecture meets the latency SLO at only one active request per replica.
+- Generation is serialized to protect the shared engine. A separate [A10G capacity study](/posts/qwen-tts-at-scale/) found that this architecture meets the latency SLO at only one active request per replica under load.
 - Voice references are ephemeral.
 - The test ALB used plain HTTP/WebSocket with no authentication.
 - Disconnecting stops delivery to the client, but I have not proved that it immediately cancels in-flight GPU work.

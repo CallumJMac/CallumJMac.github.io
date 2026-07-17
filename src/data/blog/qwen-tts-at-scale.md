@@ -1,9 +1,9 @@
 ---
 pubDatetime: 2026-07-17T00:00:00Z
-title: "How to Deploy Qwen3-TTS at Scale"
+title: "Capacity Planning Qwen3-TTS on an A10G"
 slug: qwen-tts-at-scale
 featured: true
-description: "Load testing Qwen3-TTS on an A10G, comparing a serialized server with vLLM-Omni, and turning single-GPU measurements into an honest scaling plan."
+description: "A single-GPU capacity study for streaming Qwen3-TTS: SLOs, vLLM-Omni comparison, fleet estimates, and a proposed production architecture."
 tags:
   - TTS
   - Qwen
@@ -15,11 +15,9 @@ tags:
 
 A fast demo is not necessarily a scalable service.
 
-My [streaming Qwen3-TTS server](/posts/qwen-tts-streaming/) starts one stream in about **195ms** on an A10G. With two concurrent requests, however, median time to first audio rises to **3.4 seconds**.
+My [streaming Qwen3-TTS server](/posts/qwen-tts-streaming/) reports **187–189ms p50** time to first audio (TTFA) on three fixed prompts through the ALB. This study used a different 20-prompt corpus and measured load under concurrency. At concurrency one, p50 TTFA was **195ms** and p95 was **197ms**. With two concurrent requests, median TTFA rises to **3.4 seconds**.
 
-Nothing crashed. Across this study, all **1,200 requests succeeded**. They just did not respond quickly enough.
-
-That distinction matters. Infrastructure dashboards often treat a successful response as a healthy response. For a voice agent, silence and broken playback can make a technically successful request unusable.
+All **1,200 requests succeeded**, but most conditions still violated the latency or playback SLOs. For a voice agent, a successful HTTP response can still mean silence or stutter.
 
 I tested the original server and vLLM-Omni on one A10G, then used the results to answer three questions:
 
@@ -60,7 +58,7 @@ I used two load patterns:
 
 Closed-loop tests answer “what happens with this many active users?” Open-loop tests expose queue growth when arrivals approach or exceed service capacity.
 
-The benchmark client recorded every request, including failures and outliers. It also rejected empty, malformed, non-finite, or non-24kHz audio rather than counting a bad stream as a success.
+The benchmark client recorded every request, including failures and outliers. It also rejected empty, malformed, non-finite, or non-24kHz audio rather than counting a bad stream as a success. The server, Terraform, and harness code are in [qwen-tts-serve](https://github.com/CallumJMac/qwen-tts-serve). This run is study `20260716T121717Z-capacity` (1,200 requests, 20-prompt corpus, per-request JSONL with TTFA and starvation timings).
 
 ## The result: throughput is not enough
 
@@ -77,17 +75,17 @@ The serialized server behaves like a single checkout. Once a request starts, it 
 
 vLLM-Omni makes much better use of the GPU. It peaked around **1.66 requests per second** and generated **12.66 seconds of audio per wall-clock second**, about **5.7×** the request throughput and **5.8×** the audio throughput of the current server.
 
-But higher aggregate throughput did not satisfy the playback SLO. Even at concurrency one, vLLM-Omni's p95 TTFA was a good 174ms while post-first-byte starvation reached 214ms.
-
-That is the important result: **TTFA and throughput can both look good while playback still stutters.**
+But higher aggregate throughput did not satisfy the playback SLO. Even at concurrency one, vLLM-Omni's p95 TTFA was 174ms while post-first-byte starvation reached 214ms. **TTFA and throughput can both look good while playback still stutters.**
 
 The outcome depends on `initial_codec_chunk_frames=4` and the zero-buffer player. A different chunk size or a short client buffer could improve continuity, but would change initial latency. That trade-off needs another measurement, not an assumption.
 
 ## What would 100 concurrent requests cost?
 
-Under the chosen SLO, the current backend's measured safe capacity is one active request per replica. Applying 40% headroom gives:
+Under the chosen SLO, the current backend's measured safe capacity is one active request per replica. I applied a **1.4× safety factor on the minimum fleet size**:
 
 `estimated replicas = ceil(target active requests / safe capacity × 1.4)`
+
+That adds 40% more GPUs than the bare minimum (140 for 100 active streams), not a target of 60% fleet utilization. Sizing for 60% utilization would use `ceil(target / safe capacity / 0.6)` instead, which requires **167** A10Gs for 100 streams.
 
 | Simultaneously active requests | Estimated A10Gs | Approx. on-demand compute/hour |
 | -----------------------------: | --------------: | -----------------------------: |
@@ -139,15 +137,9 @@ New replicas must also load the model, capture CUDA graphs, and warm up before b
 
 ## What is proved and what is not
 
-**Measured:** On one A10G, all 1,200 requests succeeded. The serialized backend met the full SLO only at concurrency one. vLLM-Omni delivered much higher throughput but missed the strict playback-starvation SLO.
+On one A10G, all 1,200 requests succeeded. The serialized backend met the full SLO only at concurrency one. vLLM-Omni delivered much higher throughput but missed the strict playback-starvation SLO. Fleet counts of 140, 350, and 700 A10Gs are modeled estimates from that safe boundary with a 1.4× safety factor, not tested multi-replica deployments.
 
-**Modeled:** A fleet of 140, 350, or 700 A10Gs for 100, 250, or 500 active requests, based on the serialized backend's safe boundary and 40% headroom.
-
-**Proposed:** Admission control, bounded queues, stream-aware routing, continuous batching, and autoscaling from active work and queue latency.
-
-**Still unproven:** Multi-replica balancing, autoscaling response time, replica failure behavior, public-internet latency, and the best vLLM-Omni chunk/buffer configuration.
-
-The next experiment should sweep codec chunk size and client startup buffer until vLLM-Omni meets both TTFA and continuity targets. Only then should the measured safe capacity feed a multi-replica load test.
+The proposed architecture (admission control, bounded queues, stream-aware routing, continuous batching) remains unvalidated, as do multi-replica balancing, autoscaling response time, replica failures, public-internet latency, and the best vLLM-Omni chunk/buffer configuration. The next experiment should sweep codec chunk size and client startup buffer until vLLM-Omni meets both TTFA and continuity targets, then rerun the load test across a real fleet.
 
 ## The part that generalizes to any LLM
 
