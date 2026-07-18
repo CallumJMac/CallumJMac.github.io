@@ -13,11 +13,11 @@ tags:
   - Voice Agents
 ---
 
-Every TTS tutorial ends the same way: call `model.generate()`, get a WAV file, done. That works for an audiobook. It is useless for a voice agent that needs to start talking _now_.
+The released Qwen3-TTS Python API returns a complete waveform. That interface is suitable for offline synthesis, but it does not expose the model's causal audio path to latency-sensitive applications.
 
-I took the 0.6B Qwen3-TTS model from a Hugging Face checkpoint to a deployable streaming service on AWS. On an A10G, the final service delivered its first audio in **187–189ms at p50**, depending on input length.
+I built a streaming service around the 0.6B model and deployed it on AWS. On an A10G, the endpoint returned its first audio in **187–189ms at p50** through an Application Load Balancer. CUDA graphs reduced generation RTF from roughly **1.70 to 0.35**.
 
-The code and Terraform are [open source](https://github.com/CallumJMac/qwen-tts-serve). Here is what made the difference.
+This post covers the inference runtime, WebSocket API, AWS deployment, and measurement methodology. The implementation and Terraform are [open source](https://github.com/CallumJMac/qwen-tts-serve).
 
 ## Why Qwen3-TTS?
 
@@ -108,7 +108,7 @@ RTF is generation time divided by audio duration, so lower is better and anythin
 
 The streaming endpoint itself had a higher RTF of roughly 0.44 because repeatedly decoding small chunks trades some throughput for earlier audio. That is the trade I want for a conversational agent.
 
-The engines did not produce identical durations: optimized audio was 6–20% shorter across these three prompts. RTF normalizes by each output's duration, so the speedup is useful but not an identical-output comparison.
+The engines did not produce identical durations: optimised audio was 6–20% shorter across these three prompts. RTF normalises by each output's duration, so the speedup is useful but not an identical-output comparison.
 
 Hardware: NVIDIA A10G 24GB (`g5.xlarge`), driver 550.163.01, PyTorch 2.6.0 + CUDA 12.4, `qwen-tts` 0.1.1, `faster-qwen3-tts` 0.2.6, `chunk_size=4`.
 
@@ -144,7 +144,7 @@ This is why I would not replace quality testing with a single latency number.
 
 This is a reproducible, deployable prototype, not a finished production service.
 
-- Generation is serialized to protect the shared engine. A separate [A10G capacity study](/posts/qwen-tts-at-scale/) found that this architecture meets the latency SLO at only one active request per replica under load.
+- Generation is serialised to protect the shared engine. A separate [A10G capacity study](/posts/qwen-tts-at-scale/) found that this architecture meets the latency SLO at only one active request per replica under load.
 - Voice references are ephemeral.
 - The test ALB used plain HTTP/WebSocket with no authentication.
 - Disconnecting stops delivery to the client, but I have not proved that it immediately cancels in-flight GPU work.
@@ -164,4 +164,4 @@ QWEN_TTS_ENGINE=faster uv run uvicorn qwen_tts_serve.server:app \
 uv run python scripts/stream_demo.py "Hello world"
 ```
 
-This true-streaming path requires an NVIDIA CUDA machine. The gap between a checkpoint and a responsive service is larger than `model.generate()`: CUDA graphs substantially reduced inference overhead; warm-up, health checks, packaging, WebSockets, and deployment behavior handled the rest.
+This true-streaming path requires an NVIDIA CUDA machine. The gap between a checkpoint and a responsive service is larger than `model.generate()`: CUDA graphs substantially reduced inference overhead; warm-up, health checks, packaging, WebSockets, and deployment behaviour handled the rest.
