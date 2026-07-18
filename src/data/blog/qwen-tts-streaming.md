@@ -37,9 +37,9 @@ The client received chunks, but only after the full wait. It looked like streami
 
 ## CUDA graphs, intuitively
 
-Generating one audio frame runs hundreds of small GPU operations. Normally, Python asks the GPU to launch each operation separately. For a large batch, the useful computation hides that overhead. For one frame at a time, the repeated launches matter.
+Generating one audio frame runs hundreds of small GPU operations. Normally, the CPU schedules each operation separately. For a large batch, the useful computation hides that overhead. For one frame at a time, the repeated scheduling and launch costs matter.
 
-A CUDA graph records the fixed sequence once and replays it with one graph launch. Think of recording a kitchen's entire preparation routine rather than calling out every individual step for every order.
+A CUDA graph records a fixed sequence of GPU operations once, then replays the sequence with one CPU launch. This reduces the per-step CPU scheduling and kernel-launch overhead.
 
 Qwen3-TTS has two repeated stages:
 
@@ -93,7 +93,7 @@ The Base model also supports prompt-based voice cloning. A client registers a sh
 
 ## Deploying it on AWS
 
-The Docker image contains the model weights. At about **6.9GB compressed in ECR**, it is large, but startup never races a Hugging Face download.
+The Docker image contains the model weights. At about **6.9GB compressed in ECR**, it is large, but startup does not depend on a concurrent Hugging Face download.
 
 Terraform creates:
 
@@ -104,7 +104,7 @@ Terraform creates:
 
 CUDA graph capture makes the first inference slow. The server therefore warms the model before its health endpoint returns `200`. The cold start still exists, but it happens during deployment rather than on a user's first request.
 
-The one-instance benchmark deployment also exposed a rolling-update trap. ECS tried to keep the old task healthy while placing the replacement, but the old task still owned the GPU. The deployment could not progress until I stopped the old task. GPU capacity and deployment policy must explicitly allow room for replacement tasks.
+The one-instance benchmark deployment also revealed a rolling-update capacity constraint. ECS tried to keep the old task healthy while placing the replacement, but the old task still occupied the GPU. The deployment could not progress until I stopped the old task. GPU capacity and deployment policy must explicitly allow room for replacement tasks.
 
 ## Measured results
 
@@ -120,7 +120,7 @@ Endpoint latency used one isolated client container on the same EC2 host, with e
 
 RTF is generation time divided by audio duration, so lower is better and anything below 1.0 is faster than playback. The CUDA-graph path was roughly **4.8× faster** than the official path and generated audio at about **2.8× real time**.
 
-The streaming endpoint itself had a higher RTF of roughly 0.44 because repeatedly decoding small chunks trades some throughput for earlier audio. That is the trade I want for a conversational agent.
+The streaming endpoint itself had a higher RTF of roughly 0.44 because repeatedly decoding small chunks trades some throughput for earlier audio. That trade-off is appropriate for a conversational agent.
 
 The engines did not produce identical durations: optimised audio was 6–20% shorter across these three prompts. RTF normalises by each output's duration, so the speedup is useful but not an identical-output comparison.
 
@@ -164,7 +164,7 @@ This is a reproducible, deployable prototype, not a finished production service.
 - Disconnecting stops delivery to the client, but I have not proved that it immediately cancels in-flight GPU work.
 - Streaming is faster to first audio but slower in total throughput than full CUDA-graph generation.
 
-Those are engineering tasks, not model problems, but they matter before serving real traffic.
+These service engineering constraints matter before serving real traffic.
 
 ## Try it
 
@@ -178,4 +178,4 @@ QWEN_TTS_ENGINE=faster uv run uvicorn qwen_tts_serve.server:app \
 uv run python scripts/stream_demo.py "Hello world"
 ```
 
-This true-streaming path requires an NVIDIA CUDA machine. The gap between a checkpoint and a responsive service is larger than `model.generate()`: CUDA graphs substantially reduced inference overhead; warm-up, health checks, packaging, WebSockets, and deployment behaviour handled the rest.
+This true-streaming path requires an NVIDIA CUDA machine. Building a responsive service required more than calling `model.generate()`: CUDA graphs substantially reduced inference overhead, while warm-up, health checks, packaging, WebSockets, and deployment behaviour addressed the service-level requirements.

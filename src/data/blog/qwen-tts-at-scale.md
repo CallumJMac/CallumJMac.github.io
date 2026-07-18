@@ -23,7 +23,7 @@ I tested the original server and vLLM-Omni on one A10G, then used the results to
 
 1. How much traffic can one GPU safely handle?
 2. What would hundreds of active requests require?
-3. What should a production deployment actually scale on?
+3. What should a production deployment scale on?
 
 ## Define “safe” first
 
@@ -87,9 +87,9 @@ This TTFA-only view shows the current server crossing the 300ms threshold at con
 | vLLM-Omni         |  concurrency 1 |    174ms |          214ms |                         3.73s | No        |
 | vLLM-Omni         | concurrency 16 |    4.85s |          1.27s |                        12.66s | No        |
 
-The serialised server behaves like a single checkout. Once a request starts, it receives audio consistently. Additional requests wait, so throughput stays around **0.29 requests per second** while TTFA grows with the queue. At concurrency 32, p95 TTFA reached **105 seconds**.
+The serialised server processes one request at a time. Once a request starts, it receives audio consistently. Additional requests wait, so throughput stays around **0.29 requests per second** while TTFA grows with the queue. At concurrency 32, p95 TTFA reached **105 seconds**.
 
-vLLM-Omni makes much better use of the GPU. It peaked around **1.66 requests per second** and generated **12.66 seconds of audio per wall-clock second**, about **5.7×** the request throughput and **5.8×** the audio throughput of the current server.
+vLLM-Omni achieved substantially higher aggregate throughput. It peaked around **1.66 requests per second** and generated **12.66 seconds of audio per wall-clock second**, about **5.7×** the request throughput and **5.8×** the audio throughput of the current server.
 
 But higher aggregate throughput did not satisfy the playback SLO. Even at concurrency one, vLLM-Omni's p95 TTFA was 174ms while post-first-byte starvation reached 214ms. **TTFA and throughput can both look good while playback still stutters.**
 
@@ -113,7 +113,7 @@ The cost uses the recorded `g5.xlarge` price of **$1.006 per hour** in `us-east-
 
 These are deliberately conservative **estimates**, not tested fleet sizes. They assume replicas scale independently and exclude routing, autoscaling delays, and failure recovery. The study did not validate a multi-replica deployment.
 
-They are still useful because they show that horizontally copying the serialised server is the wrong end state. Before buying hundreds of GPUs, I would improve per-replica scheduling and remeasure the safe boundary.
+They are still useful because they show that horizontally replicating the serialised server is inefficient at these target loads. Before provisioning hundreds of GPUs, I would improve per-replica scheduling and remeasure the safe boundary.
 
 I also would not size this service from average RPS alone. The current backend failed the TTFA SLO even at the lowest open-loop rate, 0.25 RPS. Variable request duration and burst timing create queues despite an average completion rate near 0.29 RPS.
 
@@ -147,7 +147,7 @@ I would autoscale primarily from:
 
 Requests per minute is a weak primary signal here. Two prompts can occupy the GPU for very different lengths of time, and a long-lived WebSocket represents ongoing work rather than one completed invocation.
 
-Backpressure is equally important. Queues should be bounded. If the predicted wait already makes a 300ms TTFA impossible, returning an overload response is more honest than accepting work and leaving the caller in silence.
+Backpressure is equally important. Queues should be bounded. If the predicted wait already makes a 300ms TTFA impossible, returning an overload response is preferable to accepting work that cannot meet the SLO.
 
 New replicas must also load the model, capture CUDA graphs, and warm up before becoming healthy. That makes reactive scale-out slow, so the fleet needs warm headroom. Scale-in should be slower and should wait for existing streams to drain.
 
@@ -157,7 +157,7 @@ On one A10G, all 1,200 requests succeeded. The serialised backend met the full S
 
 The proposed architecture (admission control, bounded queues, stream-aware routing, continuous batching) remains unvalidated, as do multi-replica balancing, autoscaling response time, replica failures, public-internet latency, and the best vLLM-Omni chunk/buffer configuration. The next experiment should sweep codec chunk size and client startup buffer until vLLM-Omni meets both TTFA and continuity targets, then rerun the load test across a real fleet.
 
-## The part that generalises to any LLM
+## Generalising the method to LLMs
 
 Audio starvation is specific to streaming media, but the capacity method is not:
 
@@ -169,4 +169,4 @@ Audio starvation is specific to streaming media, but the capacity method is not:
 
 For an LLM, replace audio starvation with inter-token latency or stalled-stream time. The same warning applies: successful requests and high token throughput do not guarantee a responsive application.
 
-The goal is not to produce the largest benchmark number. It is to find the load at which the system still behaves like the product users expect.
+The objective is not to maximise a benchmark result. It is to find the highest load at which the system still meets the product's user-facing requirements.
