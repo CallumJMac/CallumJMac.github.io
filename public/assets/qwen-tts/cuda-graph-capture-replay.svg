@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 560" role="img" aria-labelledby="title desc">
+  <title id="title">CUDA graph capture and replay during Qwen3-TTS generation</title>
+  <desc id="desc">Variable-length prefill runs normally outside the CUDA graph. Without CUDA graph replay, Python and the CPU launch each GPU kernel separately on every generation step. With replay, a fixed-shape sequence is captured once during setup, then each generation step uses one graph launch to replay that recorded GPU work. A CUDA graph is a runtime execution recording, not the model computational graph.</desc>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --surface: #f8fafc;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #536176;
+      --line: #9aa7b8;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --amber: #a35b00;
+      --amber-soft: #fff1cc;
+      --green: #08745b;
+      --green-soft: #d8f3e9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface: #101722;
+        --panel: #182231;
+        --ink: #eef3fa;
+        --muted: #b6c1d1;
+        --line: #718096;
+        --blue: #77a7ff;
+        --blue-soft: #203b68;
+        --amber: #ffc66d;
+        --amber-soft: #523a18;
+        --green: #6ee7c2;
+        --green-soft: #16483c;
+      }
+    }
+    text {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      fill: #172033;
+      fill: var(--ink);
+    }
+    .surface { fill: #f8fafc; fill: var(--surface); }
+    .panel { fill: #ffffff; fill: var(--panel); stroke: #9aa7b8; stroke: var(--line); stroke-width: 1.5; }
+    .muted { fill: #536176; fill: var(--muted); }
+    .label { font-size: 15px; font-weight: 650; letter-spacing: 0.02em; }
+    .body { font-size: 15px; }
+    .small { font-size: 13px; }
+    .heading { font-size: 23px; font-weight: 720; }
+    .arrow { fill: none; stroke: #9aa7b8; stroke: var(--line); stroke-width: 2; marker-end: url(#arrow); }
+    .cpu { fill: #fff1cc; fill: var(--amber-soft); stroke: #a35b00; stroke: var(--amber); stroke-width: 1.5; }
+    .gpu { fill: #dbeafe; fill: var(--blue-soft); stroke: #2563eb; stroke: var(--blue); stroke-width: 1.5; }
+    .replay { fill: #d8f3e9; fill: var(--green-soft); stroke: #08745b; stroke: var(--green); stroke-width: 1.5; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+    </marker>
+  </defs>
+
+  <rect class="surface" width="840" height="560" rx="14"/>
+  <text class="heading" x="420" y="39" text-anchor="middle">CUDA graph capture reduces repeated launch overhead</text>
+
+  <rect class="panel" x="24" y="61" width="792" height="76" rx="10"/>
+  <text class="label" x="420" y="87" text-anchor="middle">VARIABLE-LENGTH PREFILL</text>
+  <text class="body" x="420" y="111" text-anchor="middle">Prompt processing runs normally and remains outside the captured graph</text>
+  <path class="arrow" d="M 218 137 V 163"/>
+  <path class="arrow" d="M 622 137 V 163"/>
+
+  <rect class="panel" x="24" y="164" width="388" height="320" rx="12"/>
+  <text class="label" x="218" y="193" text-anchor="middle">WITHOUT CUDA GRAPH REPLAY</text>
+  <text class="small muted" x="218" y="215" text-anchor="middle">Repeated on every fixed-shape generation step</text>
+
+  <rect class="cpu" x="47" y="239" width="86" height="46" rx="8"/>
+  <rect class="cpu" x="153" y="239" width="86" height="46" rx="8"/>
+  <rect class="cpu" x="259" y="239" width="86" height="46" rx="8"/>
+  <text class="small" x="90" y="258" text-anchor="middle">Python / CPU</text>
+  <text class="small" x="90" y="275" text-anchor="middle">launch 1</text>
+  <text class="small" x="196" y="258" text-anchor="middle">Python / CPU</text>
+  <text class="small" x="196" y="275" text-anchor="middle">launch 2</text>
+  <text class="small" x="302" y="258" text-anchor="middle">Python / CPU</text>
+  <text class="small" x="302" y="275" text-anchor="middle">launch &#8230;</text>
+  <path class="arrow" d="M 90 285 V 313"/>
+  <path class="arrow" d="M 196 285 V 313"/>
+  <path class="arrow" d="M 302 285 V 313"/>
+
+  <rect class="gpu" x="47" y="316" width="86" height="46" rx="8"/>
+  <rect class="gpu" x="153" y="316" width="86" height="46" rx="8"/>
+  <rect class="gpu" x="259" y="316" width="86" height="46" rx="8"/>
+  <text class="small" x="90" y="344" text-anchor="middle">GPU kernel 1</text>
+  <text class="small" x="196" y="344" text-anchor="middle">GPU kernel 2</text>
+  <text class="small" x="302" y="344" text-anchor="middle">GPU kernel &#8230;</text>
+  <path class="arrow" d="M 90 362 V 390"/>
+  <path class="arrow" d="M 196 362 V 390"/>
+  <path class="arrow" d="M 302 362 V 390"/>
+  <text class="body" x="196" y="414" text-anchor="middle">Many CPU-to-GPU launches</text>
+  <text class="body" x="196" y="436" text-anchor="middle">for the same operation sequence</text>
+  <text class="small muted" x="196" y="462" text-anchor="middle">Launch overhead repeats each step</text>
+
+  <rect class="panel" x="428" y="164" width="388" height="320" rx="12"/>
+  <text class="label" x="622" y="193" text-anchor="middle">WITH CUDA GRAPH REPLAY</text>
+  <rect class="cpu" x="459" y="225" width="136" height="53" rx="8"/>
+  <text class="small" x="527" y="246" text-anchor="middle">Capture once</text>
+  <text class="small" x="527" y="264" text-anchor="middle">during setup</text>
+  <path class="arrow" d="M 595 251 H 624"/>
+  <rect class="gpu" x="627" y="216" width="158" height="71" rx="8"/>
+  <text class="small" x="706" y="239" text-anchor="middle">Recorded fixed-shape</text>
+  <text class="small" x="706" y="257" text-anchor="middle">GPU operation sequence</text>
+  <text class="small muted" x="706" y="275" text-anchor="middle">kernels 1, 2, &#8230;</text>
+
+  <text class="small muted" x="622" y="319" text-anchor="middle">Then, on every generation step</text>
+  <rect class="replay" x="469" y="340" width="142" height="57" rx="8"/>
+  <text class="small" x="540" y="363" text-anchor="middle">Python / CPU</text>
+  <text class="small" x="540" y="381" text-anchor="middle">one graph launch</text>
+  <path class="arrow" d="M 611 368 H 641"/>
+  <rect class="gpu" x="644" y="340" width="141" height="57" rx="8"/>
+  <text class="small" x="714" y="363" text-anchor="middle">Replay recorded</text>
+  <text class="small" x="714" y="381" text-anchor="middle">GPU work</text>
+  <text class="body" x="622" y="430" text-anchor="middle">One CPU-to-GPU launch replays</text>
+  <text class="body" x="622" y="452" text-anchor="middle">the captured sequence</text>
+
+  <rect class="panel" x="24" y="500" width="792" height="40" rx="10"/>
+  <text class="body" x="420" y="525" text-anchor="middle">
+    <tspan font-weight="700">CUDA graph = runtime execution recording</tspan>
+    <tspan class="muted">, not the model computational graph</tspan>
+  </text>
+</svg>

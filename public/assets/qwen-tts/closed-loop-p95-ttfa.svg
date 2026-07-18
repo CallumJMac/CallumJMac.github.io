@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 560" role="img" aria-labelledby="title desc">
+  <title id="title">Closed-loop concurrency against p95 time to first audio</title>
+  <desc id="desc">A line chart with a logarithmic vertical axis in seconds. The 300 millisecond TTFA SLO is marked. Current server p95 values at concurrency 1, 2, 4, 8, 16, and 32 are 0.197465658000067, 4.981369185350093, 14.037079576050019, 29.637841249950053, 54.6511531001503, and 105.16046132319968 seconds. Omni values are 0.173563312749957, 0.284651673449935, 0.62121538660017, 2.127027819200293, 4.849325339399865, and 13.660972452400072 seconds.</desc>
+  <metadata>
+    {
+      "source": "20260716T121717Z-capacity-analysis/capacity-summary.json",
+      "metric": "metrics.ttfa_seconds.p95",
+      "profile": "closed",
+      "units": "seconds",
+      "scale": "log10",
+      "current": [[1,0.197465658000067],[2,4.981369185350093],[4,14.037079576050019],[8,29.637841249950053],[16,54.6511531001503],[32,105.16046132319968]],
+      "omni": [[1,0.173563312749957],[2,0.284651673449935],[4,0.62121538660017],[8,2.127027819200293],[16,4.849325339399865],[32,13.660972452400072]],
+      "ttfa_slo_seconds": 0.3
+    }
+  </metadata>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --surface: #f8fafc;
+      --ink: #172033;
+      --muted: #536176;
+      --grid: #cbd3df;
+      --current: #2563eb;
+      --omni: #0b7a63;
+      --slo: #b45309;
+      --slo-soft: #fff1cc;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface: #101722;
+        --ink: #eef3fa;
+        --muted: #b6c1d1;
+        --grid: #46566d;
+        --current: #79a7ff;
+        --omni: #63dfbd;
+        --slo: #ffc66d;
+        --slo-soft: #523a18;
+      }
+    }
+    text {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      fill: #172033;
+      fill: var(--ink);
+    }
+    .surface { fill: #f8fafc; fill: var(--surface); }
+    .heading { font-size: 23px; font-weight: 720; }
+    .axis-label { font-size: 15px; font-weight: 650; }
+    .tick { font-size: 13px; fill: #536176; fill: var(--muted); }
+    .grid { stroke: #cbd3df; stroke: var(--grid); stroke-width: 1; }
+    .axis { stroke: #172033; stroke: var(--ink); stroke-width: 1.5; }
+    .current-line { fill: none; stroke: #2563eb; stroke: var(--current); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+    .omni-line { fill: none; stroke: #0b7a63; stroke: var(--omni); stroke-width: 3; stroke-dasharray: 8 5; stroke-linejoin: round; stroke-linecap: round; }
+    .current-point { fill: #f8fafc; fill: var(--surface); stroke: #2563eb; stroke: var(--current); stroke-width: 3; }
+    .omni-point { fill: #f8fafc; fill: var(--surface); stroke: #0b7a63; stroke: var(--omni); stroke-width: 3; }
+    .slo { stroke: #b45309; stroke: var(--slo); stroke-width: 2.5; stroke-dasharray: 7 5; }
+    .slo-box { fill: #fff1cc; fill: var(--slo-soft); }
+    .slo-label { fill: #b45309; fill: var(--slo); }
+    .legend { font-size: 14px; font-weight: 650; }
+  </style>
+
+  <rect class="surface" width="840" height="560" rx="14"/>
+  <text class="heading" x="420" y="37" text-anchor="middle">p95 TTFA rises with closed-loop concurrency</text>
+  <text class="axis-label" x="420" y="544" text-anchor="middle">Closed-loop concurrency</text>
+  <text class="axis-label" x="25" y="280" text-anchor="middle" transform="rotate(-90 25 280)">p95 TTFA (seconds, log scale)</text>
+
+  <line class="grid" x1="90" y1="470" x2="770" y2="470"/>
+  <line class="grid" x1="90" y1="409.569" x2="770" y2="409.569"/>
+  <line class="grid" x1="90" y1="343.343" x2="770" y2="343.343"/>
+  <line class="grid" x1="90" y1="282.912" x2="770" y2="282.912"/>
+  <line class="grid" x1="90" y1="216.686" x2="770" y2="216.686"/>
+  <line class="grid" x1="90" y1="156.255" x2="770" y2="156.255"/>
+  <line class="grid" x1="90" y1="90.029" x2="770" y2="90.029"/>
+
+  <text class="tick" x="78" y="475" text-anchor="end">0.1</text>
+  <text class="tick" x="78" y="414" text-anchor="end">0.3</text>
+  <text class="tick" x="78" y="348" text-anchor="end">1</text>
+  <text class="tick" x="78" y="288" text-anchor="end">3</text>
+  <text class="tick" x="78" y="222" text-anchor="end">10</text>
+  <text class="tick" x="78" y="162" text-anchor="end">30</text>
+  <text class="tick" x="78" y="95" text-anchor="end">100</text>
+
+  <line class="axis" x1="90" y1="70" x2="90" y2="470"/>
+  <line class="axis" x1="90" y1="470" x2="770" y2="470"/>
+  <g class="tick" text-anchor="middle">
+    <text x="130" y="493">1</text>
+    <text x="250" y="493">2</text>
+    <text x="370" y="493">4</text>
+    <text x="490" y="493">8</text>
+    <text x="610" y="493">16</text>
+    <text x="730" y="493">32</text>
+  </g>
+
+  <line class="slo" x1="90" y1="409.569" x2="770" y2="409.569"/>
+  <rect class="slo-box" x="574" y="385" width="196" height="24" rx="5"/>
+  <text class="slo-label" x="760" y="402" text-anchor="end" font-size="13" font-weight="700">300ms TTFA SLO</text>
+
+  <path class="current-line" d="M 130 432.574 L 250 255.019 L 370 198.032 L 490 156.923 L 610 123.264 L 730 87.261"/>
+  <path class="omni-line" d="M 130 439.671 L 250 412.458 L 370 369.530 L 490 301.828 L 610 256.497 L 730 199.526"/>
+
+  <g aria-label="Current server measurements">
+    <circle class="current-point" cx="130" cy="432.574" r="5"><title>Concurrency 1: 0.197465658000067 seconds</title></circle>
+    <circle class="current-point" cx="250" cy="255.019" r="5"><title>Concurrency 2: 4.981369185350093 seconds</title></circle>
+    <circle class="current-point" cx="370" cy="198.032" r="5"><title>Concurrency 4: 14.037079576050019 seconds</title></circle>
+    <circle class="current-point" cx="490" cy="156.923" r="5"><title>Concurrency 8: 29.637841249950053 seconds</title></circle>
+    <circle class="current-point" cx="610" cy="123.264" r="5"><title>Concurrency 16: 54.6511531001503 seconds</title></circle>
+    <circle class="current-point" cx="730" cy="87.261" r="5"><title>Concurrency 32: 105.16046132319968 seconds</title></circle>
+  </g>
+  <g aria-label="vLLM-Omni measurements">
+    <circle class="omni-point" cx="130" cy="439.671" r="5"><title>Concurrency 1: 0.173563312749957 seconds</title></circle>
+    <circle class="omni-point" cx="250" cy="412.458" r="5"><title>Concurrency 2: 0.284651673449935 seconds</title></circle>
+    <circle class="omni-point" cx="370" cy="369.530" r="5"><title>Concurrency 4: 0.62121538660017 seconds</title></circle>
+    <circle class="omni-point" cx="490" cy="301.828" r="5"><title>Concurrency 8: 2.127027819200293 seconds</title></circle>
+    <circle class="omni-point" cx="610" cy="256.497" r="5"><title>Concurrency 16: 4.849325339399865 seconds</title></circle>
+    <circle class="omni-point" cx="730" cy="199.526" r="5"><title>Concurrency 32: 13.660972452400072 seconds</title></circle>
+  </g>
+
+  <g transform="translate(110 63)">
+    <line class="current-line" x1="0" y1="0" x2="30" y2="0"/>
+    <circle class="current-point" cx="15" cy="0" r="4"/>
+    <text class="legend" x="39" y="5">Current server</text>
+    <line class="omni-line" x1="170" y1="0" x2="200" y2="0"/>
+    <circle class="omni-point" cx="185" cy="0" r="4"/>
+    <text class="legend" x="209" y="5">vLLM-Omni</text>
+  </g>
+
+  <text class="tick" x="770" y="522" text-anchor="end">60 measured requests per condition</text>
+</svg>

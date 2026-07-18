@@ -64,6 +64,22 @@ The benchmark client recorded every request, including failures and outliers. It
 
 These four conditions capture the main result:
 
+<figure>
+  <img
+    src="/assets/qwen-tts/closed-loop-p95-ttfa.svg"
+    alt="Log-scale line chart of p95 time to first audio against closed-loop concurrency for the current server and vLLM-Omni, with the 300 millisecond TTFA SLO marked."
+    width="840"
+    height="560"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    Measured p95 TTFA by closed-loop concurrency, using a logarithmic y-axis in seconds so the 0.17–105.16s range and 300ms SLO remain visible. Each condition contains 60 measured requests.
+  </figcaption>
+</figure>
+
+This TTFA-only view shows the current server crossing the 300ms threshold at concurrency two, while vLLM-Omni crosses it at concurrency four.
+
 | Backend           |           Load | p95 TTFA | p95 starvation | Audio generated / wall second | SLO-safe? |
 | ----------------- | -------------: | -------: | -------------: | ----------------------------: | --------- |
 | Serialised server |  concurrency 1 |    197ms |            0ms |                         2.19s | Yes       |

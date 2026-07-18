@@ -48,6 +48,20 @@ Qwen3-TTS has two repeated stages:
 
 [`faster-qwen3-tts`](https://github.com/andimarafioti/faster-qwen3-tts) captures one graph for each stage. Variable-length prompt processing stays outside the graphs; generated tokens go into preallocated KV caches with fixed shapes.
 
+<figure>
+  <img
+    src="/assets/qwen-tts/cuda-graph-capture-replay.svg"
+    alt="Diagram contrasting repeated Python and CPU kernel launches with CUDA graph capture and single-launch replay. Variable-length prefill remains outside the graph."
+    width="840"
+    height="560"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    CUDA graph replay records fixed-shape runtime execution once, then replays it with one launch per generation step. Variable-length prefill remains outside the captured graphs, which are runtime recordings rather than the model computational graph.
+  </figcaption>
+</figure>
+
 Every four completed frames, I decode and yield roughly 320ms of audio:
 
 ```python
