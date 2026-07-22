@@ -95,6 +95,8 @@ But higher aggregate throughput did not satisfy the playback SLO. Even at concur
 
 The outcome depends on `initial_codec_chunk_frames=4` and the zero-buffer player. A different chunk size or a short client buffer could improve continuity, but would change initial latency. That trade-off needs another measurement, not an assumption.
 
+A later [packet-size study](/posts/qwen-tts-streaming/#where-first-audio-latency-goes) reduced isolated TTFA to **108ms**, but no single-replica sustained policy met every SLO. Packet tuning improves onset; capacity and admission remain separate problems.
+
 ## What would 100 concurrent requests cost?
 
 Under the chosen SLO, the current backend's measured safe capacity is one active request per replica. I applied a **1.4× safety factor on the minimum fleet size**:

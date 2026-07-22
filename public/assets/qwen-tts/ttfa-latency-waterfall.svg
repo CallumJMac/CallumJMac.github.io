@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="460" viewBox="0 0 640 460" role="img" aria-labelledby="title description">
+<title id="title">Measured p50 latency waterfall</title>
+<desc id="description">The current backend's isolated one-frame request measured 37.7 milliseconds of prefill, 27.7 milliseconds of first-packet decode, 40.5 milliseconds of unattributed engine work, and about 1.2 milliseconds of serialisation, sending, and local transport.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="32" y="40" font-family="system-ui" font-size="24" font-weight="700">Measured p50 latency waterfall</text>
+<text x="32" y="68" font-family="system-ui" font-size="15" fill="#475569">Current backend, localhost, isolated, one frame per packet</text>
+<rect x="40.000" y="110" width="0.013" height="56" fill="#2563eb"/>
+<rect x="32" y="207" width="13" height="13" fill="#2563eb"/>
+<text x="53" y="220" font-family="system-ui" font-size="16" fill="#0f172a">Queue wait: 0.0 ms</text>
+<rect x="40.013" y="110" width="197.237" height="56" fill="#0891b2"/>
+<rect x="32" y="239" width="13" height="13" fill="#0891b2"/>
+<text x="53" y="252" font-family="system-ui" font-size="16" fill="#0f172a">Prefill: 37.7 ms</text>
+<rect x="237.250" y="110" width="144.866" height="56" fill="#0d9488"/>
+<rect x="32" y="271" width="13" height="13" fill="#0d9488"/>
+<text x="53" y="284" font-family="system-ui" font-size="16" fill="#0f172a">First-packet decode: 27.7 ms</text>
+<rect x="382.116" y="110" width="211.727" height="56" fill="#d97706"/>
+<rect x="32" y="303" width="13" height="13" fill="#d97706"/>
+<text x="53" y="316" font-family="system-ui" font-size="16" fill="#0f172a">Unattributed engine work: 40.5 ms</text>
+<rect x="593.843" y="110" width="0.047" height="56" fill="#7c3aed"/>
+<rect x="32" y="335" width="13" height="13" fill="#7c3aed"/>
+<text x="53" y="348" font-family="system-ui" font-size="16" fill="#0f172a">First-chunk serialisation: 0.0 ms</text>
+<rect x="593.890" y="110" width="3.524" height="56" fill="#db2777"/>
+<rect x="32" y="367" width="13" height="13" fill="#db2777"/>
+<text x="53" y="380" font-family="system-ui" font-size="16" fill="#0f172a">First-chunk send: 0.7 ms</text>
+<rect x="597.414" y="110" width="2.586" height="56" fill="#475569"/>
+<rect x="32" y="399" width="13" height="13" fill="#475569"/>
+<text x="53" y="412" font-family="system-ui" font-size="16" fill="#0f172a">Transport residual: 0.5 ms</text>
+<text x="40" y="98" font-family="system-ui" font-size="13" fill="#64748b">0 ms</text>
+<text x="600" y="98" text-anchor="end" font-family="system-ui" font-size="13" fill="#64748b">107.1 ms measured stage total</text>
+</svg>

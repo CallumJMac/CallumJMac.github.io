@@ -126,6 +126,34 @@ The engines did not produce identical durations: optimised audio was 6–20% sho
 
 Hardware: NVIDIA A10G 24GB (`g5.xlarge`), driver 550.163.01, PyTorch 2.6.0 + CUDA 12.4, `qwen-tts` 0.1.1, `faster-qwen3-tts` 0.2.6, `chunk_size=4`.
 
+## Where first-audio latency goes
+
+I followed this with a study of the current `faster-qwen3-tts` server and vLLM-Omni as alternative serving backends on one A10G. It covered packet sizes of one, two, four, and eight frames: 20 conditions, 60 measured requests each, and **1,200 successful requests**.
+
+The best isolated result was the current backend with one frame per packet: **107.8ms p50 and 109.3ms p95 TTFA**, **0ms p95 starvation**, and **0.70 p50 RTF**. This is a smaller-packet result, not a comparison with Qwen's reported four-frame result.
+
+At four frames, which matches the reported packet size, the current backend measured **194ms p50 and 197ms p95** on localhost. The **97ms four-frame result was not reproduced**. Qwen did not disclose enough hardware or measurement detail to establish a controlled comparison, so the gap cannot be assigned to a specific implementation or hardware difference. In this study, the four-frame path included about 110ms of first-packet decode, 38ms of prefill, and 41ms of unattributed engine work.
+
+The one-frame waterfall below measured **37.7ms prefill**, **27.7ms first-packet decode**, **40.5ms unattributed engine work**, and about **1.2ms combined serialisation, send, and transport**. The 40.5ms is not a proven exact substage. It can include preparation, Code2Wav or audio decoding, and device-to-host conversion. Instrumenting that interval is the next profiling target.
+
+<figure>
+  <img
+    src="/assets/qwen-tts/ttfa-latency-waterfall.svg"
+    alt="Measured p50 latency waterfall for the selected current-backend localhost isolated condition with one codec frame per packet."
+    width="640"
+    height="460"
+    loading="lazy"
+    decoding="async"
+  />
+  <figcaption>
+    Measured p50 stages for the current backend's isolated one-frame condition. The bars are normalised to the measured stage total, not an arithmetic decomposition of independently sampled percentiles.
+  </figcaption>
+</figure>
+
+The ALB was not the bottleneck. Paired isolated requests put its contribution at only **0.7–1.1ms p50**, depending on packet size.
+
+Production is a separate result. One-frame packets optimise isolated onset, but no tested single-replica sustained condition met every SLO. The current backend queued severely. vLLM-Omni came closest with eight-frame packets, but still measured **376ms p95 TTFA** and **102ms p95 starvation**. I would validate bounded admission and/or multiple replicas rather than deploy any tested sustained policy unchanged.
+
 ## Does streaming change the audio?
 
 Usually slightly, but one of ten pairs ended 800ms early. Full and streamed waveforms were not bit-identical.
