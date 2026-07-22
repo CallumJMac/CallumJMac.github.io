@@ -25,16 +25,6 @@ Qwen3-TTS is small enough for one 24GB A10G, supports voice cloning, and represe
 
 Its decoder is causal: it can turn completed frames into audio without waiting for future frames. That makes real streaming possible.
 
-The official Python API, however, returns only after the whole utterance has been generated. My first "streaming" implementation simply sliced that finished waveform:
-
-```python
-samples, sample_rate = model.generate(text)  # waits for everything
-for chunk in split(samples):
-    yield chunk, sample_rate
-```
-
-The client received chunks, but only after the full wait. It looked like streaming without improving latency.
-
 ## CUDA graphs, intuitively
 
 Generating one audio frame runs hundreds of small GPU operations. Normally, the CPU schedules each operation separately. For a large batch, the useful computation hides that overhead. For one frame at a time, the repeated scheduling and launch costs matter.
