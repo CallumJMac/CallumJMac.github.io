@@ -23,12 +23,12 @@ It is two small open-source pieces: a [Python daemon](https://github.com/CallumJ
     src="/assets/orca-talkback/how-it-works.svg"
     alt="Architecture diagram. You dictate to a Claude Code agent in Orca. A Claude Code hook asks the orca-talkback daemon whether Talkback is on and, if so, adds an instruction. The Talkback plugin forwards focus and agent status to the daemon, which has Kokoro speak the reply's spoken line. Echo cancellation and voice detection on the microphone let you stop it by talking."
     width="840"
-    height="630"
+    height="566"
     loading="lazy"
     decoding="async"
   />
   <figcaption>
-    The plugin tells the daemon what is on screen and when agents finish. The daemon decides what to say, Kokoro says it, and the microphone listens for you while it does.
+    <strong>Figure 1.</strong> The plugin tells the daemon what is on screen and when agents finish. The daemon decides what to say, Kokoro says it, and the microphone listens for you while it does.
   </figcaption>
 </figure>
 
@@ -47,14 +47,14 @@ The Talkback button in Orca's status bar picks the mode per session. On, the age
 <figure>
   <img
     src="/assets/orca-talkback/time-to-first-word.svg"
-    alt="Stacked bar: reading the finished reply from Orca takes 370 milliseconds, synthesising the first sentence 320 milliseconds, and the speaker buffer 120 milliseconds, about 0.8 seconds in total."
-    width="840"
-    height="300"
+    alt="Timeline from the agent finishing to the first word: reading the reply from Orca takes 370 milliseconds, synthesising the first sentence 320 milliseconds and the speaker buffer 120 milliseconds, so the first word starts at 810 milliseconds."
+    width="539"
+    height="155"
     loading="lazy"
     decoding="async"
   />
   <figcaption>
-    From the agent finishing to the first word, median of five runs on an M4 Max. Synthesis time grows with sentence length, so the hook asks for a short first sentence: a 23-word opener took 1.2 seconds instead of 0.3.
+    <strong>Figure 2.</strong> From the agent finishing to the first word, median of five runs on an M4 Max. Synthesis time grows with sentence length, so the hook asks for a short first sentence: a 23-word opener took 1.2 seconds instead of 0.3.
   </figcaption>
 </figure>
 
@@ -69,14 +69,14 @@ orca-talkback feeds every sample it plays to WebRTC's AEC3 echo canceller as the
 <figure>
   <img
     src="/assets/orca-talkback/echo-cancellation.svg"
-    alt="Line chart over a 12 second reply. The microphone hears the agent's voice around minus 33 decibels; after echo cancellation the same signal sits around minus 66 decibels, a median 26 decibels quieter, with brief jumps at the start of each sentence."
-    width="840"
-    height="470"
+    alt="Line chart over a 12 second reply. The microphone hears the agent's voice at a median of minus 37 dBFS; after echo cancellation the median is minus 67 dBFS, with brief jumps at the start of each sentence."
+    width="594"
+    height="266"
     loading="lazy"
     decoding="async"
   />
   <figcaption>
-    The agent's own voice, as the microphone hears it and after echo cancellation. The brief jumps at the start of each sentence are the canceller adapting, which is why barge-in ignores the first half-second of every sentence.
+    <strong>Figure 3.</strong> The agent's own voice, as the microphone hears it and after echo cancellation, for a four-sentence reply through MacBook speakers. Dashed lines are medians; sample by sample, cancellation makes it a median of 26 dB quieter. The brief jumps at the start of each sentence are the canceller adapting, which is why barge-in ignores the first half-second of every sentence.
   </figcaption>
 </figure>
 
