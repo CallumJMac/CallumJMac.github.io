@@ -109,14 +109,13 @@ Kokoro had the highest naturalness of the 56 English models, an error rate withi
 You need macOS on Apple Silicon, Orca 1.4.248 or newer, and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-brew install portaudio espeak-ng
-git clone https://github.com/CallumJMac/orca-talkback.git && cd orca-talkback
-uv sync
+uv tool install git+https://github.com/CallumJMac/orca-talkback
+orca-talkback setup   # adds the Claude Code hook, downloads the voice, checks your mic
 # Orca prints a fingerprint for the plugin's access; re-run with --approve <fingerprint>
 orca plugin install CallumJMac/orca-talkback-plugin
-uv run orca-talkback
+orca-talkback
 ```
 
-Then add the voice-mode hook to Claude Code ([instructions](https://github.com/CallumJMac/orca-talkback#speaking-or-reading)) and ask an agent something. There are no API keys and no network calls: everything runs on your Mac, the microphone is only open while it speaks, and nothing is recorded.
+Then ask an agent something. There is no Homebrew step and there are no API keys: the voice model is downloaded once, then everything runs on your Mac, the microphone is only open while it speaks, and nothing is recorded.
 
 It is early, tested with Claude Code agents on an M4 Max, and I would love to hear how it works for you. Issues and pull requests are welcome on [GitHub](https://github.com/CallumJMac/orca-talkback).
