@@ -70,6 +70,9 @@
     }
 
     table {
+      /* Wide tables scroll sideways on phones instead of widening the page. */
+      @apply max-sm:block max-sm:overflow-x-auto;
+
       th,
       td {
         @apply border border-border p-2;
