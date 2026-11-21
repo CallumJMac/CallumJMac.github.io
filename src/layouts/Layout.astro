@@ -173,6 +173,17 @@ const structuredData = {
     <!-- Load full theme logic -->
     <script src="../scripts/theme.ts"></script>
 
+    <script>
+      // Media elements swapped in by the ClientRouter never run resource
+      // selection, so they fail with "no supported sources" until the page is
+      // reloaded. Re-run it after every client-side navigation.
+      document.addEventListener("astro:after-swap", () => {
+        document
+          .querySelectorAll<HTMLMediaElement>("audio, video")
+          .forEach(media => media.load());
+      });
+    </script>
+
     <!-- Cloudflare Web Analytics -->
     <script
       is:inline
