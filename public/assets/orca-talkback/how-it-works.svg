@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 630" role="img" aria-labelledby="title desc">
+  <title id="title">How orca-talkback works</title>
+  <desc id="desc">You dictate to a Claude Code agent in Orca. A Claude Code hook asks the local orca-talkback daemon whether Talkback is on for the session and, if so, asks the agent to end its reply with a hidden spoken line. The Talkback plugin forwards workspace focus and agent status to the daemon, which reads the reply and has Kokoro speak the line on your Mac. While it speaks, echo cancellation and voice detection on the microphone let you stop it by talking.</desc>
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --surface: #f8fafc; --panel: #ffffff; --ink: #172033; --muted: #536176; --line: #9aa7b8; --grid: #e2e8f0;
+      --blue: #2563eb; --blue-soft: #dbeafe; --amber: #a35b00; --amber-soft: #fff1cc; --green: #08745b; --green-soft: #d8f3e9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface: #101722; --panel: #182231; --ink: #eef3fa; --muted: #b6c1d1; --line: #718096; --grid: #263244;
+        --blue: #5b8ef0; --blue-soft: #203b68; --amber: #c98320; --amber-soft: #523a18; --green: #6ee7c2; --green-soft: #16483c;
+      }
+    }
+    text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; fill: var(--ink); }
+    .surface { fill: var(--surface); }
+    .panel { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+    .panel-blue { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.5; }
+    .panel-amber { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1.5; }
+    .panel-green { fill: var(--green-soft); stroke: var(--green); stroke-width: 1.5; }
+    .title { font-size: 20px; font-weight: 700; }
+    .label { font-size: 15px; font-weight: 600; }
+    .small { font-size: 13px; fill: var(--muted); }
+    .tiny { font-size: 12px; fill: var(--muted); }
+    .arrow { stroke: var(--line); stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .arrow-blue { stroke: var(--blue); stroke-width: 2; fill: none; marker-end: url(#arrowhead-blue); }
+    .arrow-amber { stroke: var(--amber); stroke-width: 2; fill: none; marker-end: url(#arrowhead-amber); }
+    .grid { stroke: var(--grid); stroke-width: 1; }
+    .axis { stroke: var(--line); stroke-width: 1; }
+    .series-amber { stroke: var(--amber); stroke-width: 2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+    .series-blue { stroke: var(--blue); stroke-width: 2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+    .fill-blue { fill: var(--blue); }
+    .fill-amber { fill: var(--amber); }
+    .fill-muted { fill: var(--line); }
+    .label-amber { fill: var(--amber); font-size: 14px; font-weight: 600; }
+    .label-blue { fill: var(--blue); font-size: 14px; font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa7b8"/></marker>
+    <marker id="arrowhead-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+    <marker id="arrowhead-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a35b00"/></marker>
+  </defs>
+  <rect class="surface" x="0" y="0" width="840" height="630" rx="18"/>
+  <text class="title" x="40" y="48">How orca-talkback works</text>
+  <rect class="panel" x="40" y="90" width="170" height="92" rx="12"/>
+  <text class="label" x="125.0" y="118" text-anchor="middle">You</text>
+  <text class="small" x="125.0" y="140" text-anchor="middle">dictate with Wispr Flow</text>
+  <text class="small" x="125.0" y="158" text-anchor="middle">or any dictation tool</text>
+  <rect class="panel" x="270" y="90" width="210" height="92" rx="12"/>
+  <text class="label" x="375.0" y="118" text-anchor="middle">Orca</text>
+  <text class="small" x="375.0" y="140" text-anchor="middle">Claude Code agent</text>
+  <text class="small" x="375.0" y="158" text-anchor="middle">replies in the chat</text>
+  <rect class="panel-green" x="560" y="90" width="240" height="92" rx="12"/>
+  <text class="label" x="680.0" y="118" text-anchor="middle">Claude Code hook</text>
+  <text class="small" x="680.0" y="140" text-anchor="middle">asks the daemon: is</text>
+  <text class="small" x="680.0" y="158" text-anchor="middle">Talkback on here?</text>
+  <rect class="panel" x="270" y="250" width="210" height="92" rx="12"/>
+  <text class="label" x="375.0" y="278" text-anchor="middle">Talkback plugin</text>
+  <text class="small" x="375.0" y="300" text-anchor="middle">forwards focus and</text>
+  <text class="small" x="375.0" y="318" text-anchor="middle">agent status</text>
+  <rect class="panel-blue" x="560" y="250" width="240" height="108" rx="12"/>
+  <text class="label" x="680.0" y="278" text-anchor="middle">orca-talkback daemon</text>
+  <text class="small" x="680.0" y="300" text-anchor="middle">decides what is on screen,</text>
+  <text class="small" x="680.0" y="318" text-anchor="middle">reads the reply, picks</text>
+  <text class="small" x="680.0" y="336" text-anchor="middle">its hidden spoken line</text>
+  <rect class="panel-amber" x="560" y="420" width="240" height="92" rx="12"/>
+  <text class="label" x="680.0" y="448" text-anchor="middle">Kokoro, on your Mac</text>
+  <text class="small" x="680.0" y="470" text-anchor="middle">speaks the line</text>
+  <text class="small" x="680.0" y="488" text-anchor="middle">within a second</text>
+  <rect class="panel" x="270" y="420" width="210" height="92" rx="12"/>
+  <text class="label" x="375.0" y="448" text-anchor="middle">Barge-in</text>
+  <text class="small" x="375.0" y="470" text-anchor="middle">echo cancellation and</text>
+  <text class="small" x="375.0" y="488" text-anchor="middle">voice detection on the mic</text>
+  <rect class="panel" x="40" y="420" width="170" height="92" rx="12"/>
+  <text class="label" x="125.0" y="448" text-anchor="middle">Speakers and mic</text>
+  <text class="small" x="125.0" y="470" text-anchor="middle">you hear it, and can</text>
+  <text class="small" x="125.0" y="488" text-anchor="middle">talk over it</text>
+  <path class="arrow" d="M210,136 L264,136"/>
+  <path class="arrow-blue" d="M560,136 L486,136"/>
+  <text class="tiny" x="523" y="126" text-anchor="middle">adds the</text><text class="tiny" x="523" y="160" text-anchor="middle">instruction</text>
+  <path class="arrow" d="M375,182 L375,244"/>
+  <path class="arrow" d="M480,296 L554,296"/>
+  <path class="arrow-blue" d="M680,250 L680,188"/>
+  <text class="tiny" x="690" y="224">voice mode?</text>
+  <path class="arrow-amber" d="M680,358 L680,414"/>
+  <path class="arrow-amber" d="M560,466 L486,466"/>
+  <path class="arrow-amber" d="M270,466 L216,466"/>
+  <path class="arrow" d="M125,512 L125,540 L375,540 L375,518"/>
+  <text class="tiny" x="250" y="560" text-anchor="middle">your voice through the mic stops playback</text>
+  <text class="tiny" x="40" y="604">Everything audio runs locally. Only the plugin’s two events and one local HTTP question cross process boundaries.</text>
+</svg>

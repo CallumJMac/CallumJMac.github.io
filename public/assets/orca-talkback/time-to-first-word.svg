@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 300" role="img" aria-labelledby="title desc">
+  <title id="title">Time from the agent finishing to the first word</title>
+  <desc id="desc">Reading the finished reply from Orca takes about 370 milliseconds, synthesising a short first sentence with Kokoro about 320 milliseconds, and the speaker output buffer about 120 milliseconds, so the first word plays about 0.8 seconds after the agent finishes.</desc>
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --surface: #f8fafc; --panel: #ffffff; --ink: #172033; --muted: #536176; --line: #9aa7b8; --grid: #e2e8f0;
+      --blue: #2563eb; --blue-soft: #dbeafe; --amber: #a35b00; --amber-soft: #fff1cc; --green: #08745b; --green-soft: #d8f3e9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface: #101722; --panel: #182231; --ink: #eef3fa; --muted: #b6c1d1; --line: #718096; --grid: #263244;
+        --blue: #5b8ef0; --blue-soft: #203b68; --amber: #c98320; --amber-soft: #523a18; --green: #6ee7c2; --green-soft: #16483c;
+      }
+    }
+    text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; fill: var(--ink); }
+    .surface { fill: var(--surface); }
+    .panel { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+    .panel-blue { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.5; }
+    .panel-amber { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1.5; }
+    .panel-green { fill: var(--green-soft); stroke: var(--green); stroke-width: 1.5; }
+    .title { font-size: 20px; font-weight: 700; }
+    .label { font-size: 15px; font-weight: 600; }
+    .small { font-size: 13px; fill: var(--muted); }
+    .tiny { font-size: 12px; fill: var(--muted); }
+    .arrow { stroke: var(--line); stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .arrow-blue { stroke: var(--blue); stroke-width: 2; fill: none; marker-end: url(#arrowhead-blue); }
+    .arrow-amber { stroke: var(--amber); stroke-width: 2; fill: none; marker-end: url(#arrowhead-amber); }
+    .grid { stroke: var(--grid); stroke-width: 1; }
+    .axis { stroke: var(--line); stroke-width: 1; }
+    .series-amber { stroke: var(--amber); stroke-width: 2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+    .series-blue { stroke: var(--blue); stroke-width: 2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+    .fill-blue { fill: var(--blue); }
+    .fill-amber { fill: var(--amber); }
+    .fill-muted { fill: var(--line); }
+    .label-amber { fill: var(--amber); font-size: 14px; font-weight: 600; }
+    .label-blue { fill: var(--blue); font-size: 14px; font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa7b8"/></marker>
+    <marker id="arrowhead-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+    <marker id="arrowhead-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a35b00"/></marker>
+  </defs>
+  <rect class="surface" x="0" y="0" width="840" height="300" rx="18"/>
+  <text class="title" x="40" y="48">Time from the agent finishing to the first word</text>
+  <text class="small" x="40" y="76">Median of five runs on an M4 Max, for a short first sentence (6 to 9 words)</text>
+  <line class="grid" x1="60.0" y1="130" x2="60.0" y2="196"/>
+  <text class="tiny" x="60.0" y="216" text-anchor="middle">0 ms</text>
+  <line class="grid" x1="140.0" y1="130" x2="140.0" y2="196"/>
+  <text class="tiny" x="140.0" y="216" text-anchor="middle">100 ms</text>
+  <line class="grid" x1="220.0" y1="130" x2="220.0" y2="196"/>
+  <text class="tiny" x="220.0" y="216" text-anchor="middle">200 ms</text>
+  <line class="grid" x1="300.0" y1="130" x2="300.0" y2="196"/>
+  <text class="tiny" x="300.0" y="216" text-anchor="middle">300 ms</text>
+  <line class="grid" x1="380.0" y1="130" x2="380.0" y2="196"/>
+  <text class="tiny" x="380.0" y="216" text-anchor="middle">400 ms</text>
+  <line class="grid" x1="460.0" y1="130" x2="460.0" y2="196"/>
+  <text class="tiny" x="460.0" y="216" text-anchor="middle">500 ms</text>
+  <line class="grid" x1="540.0" y1="130" x2="540.0" y2="196"/>
+  <text class="tiny" x="540.0" y="216" text-anchor="middle">600 ms</text>
+  <line class="grid" x1="620.0" y1="130" x2="620.0" y2="196"/>
+  <text class="tiny" x="620.0" y="216" text-anchor="middle">700 ms</text>
+  <line class="grid" x1="700.0" y1="130" x2="700.0" y2="196"/>
+  <text class="tiny" x="700.0" y="216" text-anchor="middle">800 ms</text>
+  <line class="grid" x1="780.0" y1="130" x2="780.0" y2="196"/>
+  <text class="tiny" x="780.0" y="216" text-anchor="middle">900 ms</text>
+  <rect class="fill-blue" x="60" y="140" width="294.0" height="46" rx="4"/>
+  <text class="label" x="208.0" y="118" text-anchor="middle">370 ms</text>
+  <text class="small" x="208.0" y="136" text-anchor="middle">Read the reply from Orca</text>
+  <rect class="fill-amber" x="358.0" y="140" width="254.0" height="46" rx="4"/>
+  <text class="label" x="484.0" y="242" text-anchor="middle">320 ms</text>
+  <text class="small" x="484.0" y="260" text-anchor="middle">Synthesise the first sentence</text>
+  <rect class="fill-muted" x="614.0" y="140" width="94.0" height="46" rx="4"/>
+  <text class="label" x="660.0" y="118" text-anchor="middle">120 ms</text>
+  <text class="small" x="660.0" y="136" text-anchor="middle">Speaker buffer</text>
+  <text class="label" x="720.0" y="170">about 0.8 s</text>
+</svg>
