@@ -40,7 +40,7 @@ Agent replies are written to be read. Mine are full of tables, file paths and co
 [//]: # (spoken: I fixed the barge-in bug and pushed it. Want me to tag a release?)
 ```
 
-Markdown renderers drop link reference definitions like this one, so the reply looks exactly the same, in Orca's chat and in Claude Code's terminal. The daemon finds the line and speaks it. The agent knows what it meant, so the spoken version says exactly that, and nothing sits between the reply and the voice.
+Orca's chat view hides link reference definitions like this one, so the reply looks exactly the same. The daemon finds the line and speaks it. The agent knows what it meant, so the spoken version says exactly that, and nothing sits between the reply and the voice.
 
 The Talkback button in Orca's status bar picks the mode per session. On, the agent writes for speaking and reading at once; muted, it writes for reading only and the hook adds nothing. Each Orca chat is its own workspace, so muting a chat mutes just that chat.
 
@@ -58,7 +58,7 @@ The Talkback button in Orca's status bar picks the mode per session. On, the age
   </figcaption>
 </figure>
 
-If an agent forgets the spoken line, orca-talkback speaks a cleaned-up version of the reply instead, with code, tables and links removed.
+Claude Code's terminal would print the line, so agents running in a terminal are not asked for one. For them, or when an agent forgets, orca-talkback speaks a cleaned-up version of the reply instead, with code, tables and links removed.
 
 ## Talking over it
 
