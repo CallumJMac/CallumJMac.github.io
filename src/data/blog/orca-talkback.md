@@ -3,6 +3,7 @@ pubDatetime: 2026-11-21T00:00:00Z
 title: "Making My Coding Agents Talk Back"
 slug: orca-talkback
 featured: true
+ogImage: "https://callumjmac.github.io/assets/orca-talkback/cover.png"
 description: "orca-talkback gives Claude Code agents in Orca a voice: a spoken summary of every reply within a second, local text-to-speech, and barge-in so you can talk over it."
 tags:
   - TTS
