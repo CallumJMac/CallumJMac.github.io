@@ -47,6 +47,11 @@
       @apply mx-auto border border-border;
     }
 
+    /* Plots and diagrams sit directly on the page, like figures in a paper. */
+    figure img[src$=".svg"] {
+      @apply border-0;
+    }
+
     figcaption {
       @apply opacity-75;
     }

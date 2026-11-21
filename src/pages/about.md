@@ -7,6 +7,10 @@ I'm an AI engineer in London. At [Runna](https://www.runna.com/), I build the ML
 
 I write about the engineering that gets models from notebook to production: retrieval systems, voice agents, evaluation frameworks, and the deployment details nobody warns you about.
 
+## Research
+
+I study how zero-shot voice cloning models represent a speaker, and measure how speech models behave under production load. See the [research page](/research/) for papers, code and audio samples.
+
 ## What I write about
 
 - **MLOps & monitoring** — continual learning, distribution drift, model performance metrics

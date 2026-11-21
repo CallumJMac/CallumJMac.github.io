@@ -50,6 +50,15 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
       <p class="mt-2">
         I write about the engineering that gets models from notebook to production: retrieval systems, voice agents, evaluation frameworks, and the deployment details nobody warns you about.
       </p>
+      <p class="mt-2">
+        My current research asks where zero-shot voice cloning models store a speaker's identity: <LinkButton
+          class="underline decoration-dashed underline-offset-4 hover:text-accent"
+          href="/posts/voice-cloning-conditioning-sites/"
+        >read the write-up</LinkButton>, or see all my <LinkButton
+          class="underline decoration-dashed underline-offset-4 hover:text-accent"
+          href="/research/"
+        >research</LinkButton>.
+      </p>
       {
         // only display if at least one social link is enabled
         SOCIALS.length > 0 && (
