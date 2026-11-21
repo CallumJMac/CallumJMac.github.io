@@ -109,7 +109,7 @@ Kokoro had the highest naturalness of the 56 English models, an error rate withi
 You need macOS on Apple Silicon, Orca 1.4.248 or newer, and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv tool install git+https://github.com/CallumJMac/orca-talkback
+uv tool install --python 3.14 orca-talkback
 orca-talkback setup   # adds the Claude Code hook, downloads the voice, checks your mic
 # Orca prints a fingerprint for the plugin's access; re-run with --approve <fingerprint>
 orca plugin install CallumJMac/orca-talkback-plugin
