@@ -119,23 +119,28 @@ The prompt-only F5-TTS gets *worse* with a three-reference prompt, consistent wi
 
 ## Listen
 
-One LibriTTS-R sentence, "I thanked him, but I was not deceived by his compliment." First the speaker's own reference recording:
+One LibriTTS-R speaker, drawn at random with a fixed seed rather than picked for effect. Every model was asked to say the same new sentence, "I thanked him, but I was not deceived by his compliment."
 
-<audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/prompt.mp3"></audio>
+The models heard a **reference prompt** of the speaker reading a *different* sentence. Similarity is scored against a **held-out recording** that no model heard, so it rewards matching the voice, not copying the prompt.
 
-**Qwen3-TTS 0.6B** (embedding reaches the LM), full and then x-vector only:
+**The speaker**
 
-<audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/qwen06_full.mp3"></audio>
+<div class="listen-row"><p>Reference prompt, heard by all</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/prompt.mp3"></audio></div>
+<div class="listen-row"><p>Held-out recording, heard by none</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/heldout.mp3"></audio></div>
 
-<audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/qwen06_xvector_only.mp3"></audio>
+**Qwen3-TTS 0.6B**, embedding reaches the LM
 
-**CosyVoice 3** (embedding in the decoder only), full and then x-vector only:
+<div class="listen-row"><p>Prompt + embedding: similarity 0.53</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/qwen06_full.mp3"></audio></div>
+<div class="listen-row"><p>Embedding only: similarity 0.60</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/qwen06_xvector_only.mp3"></audio></div>
 
-<audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/cosyvoice3_full.mp3"></audio>
+**CosyVoice 3**, embedding in the decoder only
 
-<audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/cosyvoice3_xvector_only.mp3"></audio>
+<div class="listen-row"><p>Prompt + embedding: similarity 0.58</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/cosyvoice3_full.mp3"></audio></div>
+<div class="listen-row"><p>Embedding only: similarity 0.51</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/cosyvoice3_xvector_only.mp3"></audio></div>
 
-The [demo page](/conditioning-sites/) has every system on clean and noisy prompts.
+On this sentence, Qwen3-TTS actually scores *higher* without the prompt, while CosyVoice 3 loses 0.07. Single sentences vary: across all 34 speakers the averages are −0.07 and −0.18 (Figure 1). Similarity here is the per-clip SIM-o from the released scores.
+
+The [demo page](/conditioning-sites/) has a second LibriTTS-R speaker, two noisy Seed-TTS-eval prompts, every system and all eight factorial cells.
 
 ## What this means if you build with these models
 
