@@ -23,7 +23,7 @@ I built a streaming service around the 0.6B model, deployed it on AWS, and measu
 - First-audio latency grows by about **29ms per codec frame** in the first packet. One-frame packets reached **108ms**.
 - Every clip starts with about **420ms of silence**. The listener hears speech roughly half a second after the request, whichever packet size you pick.
 
-This post covers the runtime, WebSocket API, AWS deployment, and measurements. The server and Terraform are [open source](https://github.com/CallumJMac/qwen-tts-serve); the per-request records and analysis scripts behind every figure will follow in the same repository. A [companion capacity study](/posts/qwen-tts-at-scale/) covers behaviour under load.
+This post covers the runtime, WebSocket API, AWS deployment, and measurements. The server, Terraform, per-request records and [analysis scripts](https://github.com/CallumJMac/qwen-tts-serve/tree/main/experiments/blog_analysis) are [open source](https://github.com/CallumJMac/qwen-tts-serve). A [companion capacity study](/posts/qwen-tts-at-scale/) covers behaviour under load.
 
 ## Why Qwen3-TTS?
 
@@ -245,4 +245,4 @@ QWEN_TTS_ENGINE=faster uv run uvicorn qwen_tts_serve.server:app \
 uv run python scripts/stream_demo.py "Hello world"
 ```
 
-The streaming path needs an NVIDIA CUDA machine. Every number and figure in this post is generated from the retained per-request records by an analysis package that needs no GPU. I will publish it, with the records, in the same repository.
+The streaming path needs an NVIDIA CUDA machine. Every number and figure in this post is generated from the retained per-request records by [`experiments/blog_analysis`](https://github.com/CallumJMac/qwen-tts-serve/tree/main/experiments/blog_analysis) in the same repository. It needs no GPU.
