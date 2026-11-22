@@ -1,5 +1,6 @@
 ---
 pubDatetime: 2026-11-21T00:00:00Z
+modDatetime: 2026-11-22T00:00:00Z
 title: "Making My Coding Agents Talk Back"
 slug: orca-talkback
 featured: true
@@ -13,7 +14,7 @@ tags:
   - Kokoro
 ---
 
-I run my coding agents side by side in [Orca](https://github.com/stablyai/orca), and I talk to them with Wispr Flow. Talking *to* an agent is solved. What I wanted was for it to talk *back*: when it finishes, tell me what it did and what it needs from me, out loud, the way voice mode works in the Claude apps.
+I run my coding agents side by side in [Orca](https://github.com/stablyai/orca), a desktop app for running agents such as Claude Code in parallel, and I talk to them with the dictation app Wispr Flow. Talking *to* an agent is solved. I wanted it to talk *back*: tell me what it did and what it needs from me, out loud, like voice mode in the Claude apps.
 
 So I built **orca-talkback**. When an agent in the workspace I am looking at finishes, I hear one to three conversational sentences about its reply, spoken locally on my Mac, starting **about 0.8 seconds** after it finishes. If I start talking, it stops.
 
@@ -35,15 +36,17 @@ It is two small open-source pieces: a [Python daemon](https://github.com/CallumJ
 
 ## The agent writes for your ears
 
-Agent replies are written to be read. Mine are full of tables, file paths and commit hashes, and read aloud they sound like someone reciting a changelog. So orca-talkback asks the agent that did the work to say it differently. When Talkback is on for a session, a Claude Code `UserPromptSubmit` hook adds one hidden instruction to each prompt: end the reply with a spoken version of it, written as a markdown comment.
+Agent replies are written to be read: tables, file paths and commit hashes that sound like a recited changelog. So when Talkback is on for a session, a Claude Code `UserPromptSubmit` hook adds one hidden instruction to each prompt: end the reply with a spoken version, written as a markdown comment.
 
 ```text
 [//]: # (spoken: I fixed the barge-in bug and pushed it. Want me to tag a release?)
 ```
 
-Orca's chat view hides link reference definitions like this one, so the reply looks exactly the same. The daemon finds the line and speaks it. The agent knows what it meant, so the spoken version says exactly that, and nothing sits between the reply and the voice.
+Orca's chat view hides link reference definitions like this, so the reply looks unchanged, and the daemon speaks the line. The agent that did the work writes it, so no second model has to summarise anything.
 
-The Talkback button in Orca's status bar picks the mode per session. On, the agent writes for speaking and reading at once; muted, it writes for reading only and the hook adds nothing. Each Orca chat is its own workspace, so muting a chat mutes just that chat.
+Claude Code's terminal would print the line, so terminal agents are not asked for one. For them, or when an agent forgets, orca-talkback speaks a cleaned-up reply instead, with code, tables and links removed, cut at a sentence boundary.
+
+The Talkback button in Orca's status bar toggles it per session: muted, the hook adds nothing and nothing is spoken. Each Orca chat is its own workspace, so muting one chat mutes only that chat.
 
 <figure>
   <img
@@ -55,46 +58,44 @@ The Talkback button in Orca's status bar picks the mode per session. On, the age
     decoding="async"
   />
   <figcaption>
-    <strong>Figure 2.</strong> From the agent finishing to the first word, median of five runs on an M4 Max. Synthesis time grows with sentence length, so the hook asks for a short first sentence: a 23-word opener took 1.2 seconds instead of 0.3.
+    <strong>Figure 2.</strong> Median of five runs on an M4 Max. Kokoro renders a whole chunk before any of it plays, so the first sentence is synthesised alone and the rest follow while it plays. A long opener therefore delays the first word, which is why the hook asks for one under ten words: a 23-word opener took 1.2 seconds to synthesise instead of 0.3.
   </figcaption>
 </figure>
 
-Claude Code's terminal would print the line, so agents running in a terminal are not asked for one. For them, or when an agent forgets, orca-talkback speaks a cleaned-up version of the reply instead, with code, tables and links removed.
-
 ## Talking over it
 
-Barge-in is the hard part. The microphone hears the speakers, so a naive voice detector hears the agent's own voice and stops it mid-sentence.
+Barge-in is the hard part: the microphone hears the speakers, so a naive voice detector would stop the agent with its own voice.
 
-orca-talkback feeds every sample it plays to WebRTC's AEC3 echo canceller as the reference, so the canceller can subtract the agent's voice from the microphone signal before Silero VAD looks for speech. The one rule that makes this work is that the reference must be exactly what the speaker played, sample for sample. Even the short pause while the next sentence is synthesised is filled with real silence written to both the speaker and the reference, so the two never drift apart.
+orca-talkback feeds everything it plays to WebRTC's AEC3 echo canceller as the reference, so the agent's voice is removed from the microphone signal before Silero VAD looks for speech. The rule that makes this work: the reference must be exactly the audio sent to the speaker, silences included, on one continuous timeline, because AEC3 tracks a steady delay, not one that jumps. So the pause while the next chunk is synthesised is real silence written to both. Padding the reference later from microphone timing would mistake audio still in the output buffer for silence, putting every later sentence ahead of its reference. One canceller lasts the whole reply, so what it learns about the room carries over.
 
 <figure>
   <img
     src="/assets/orca-talkback/echo-cancellation.svg"
-    alt="Line chart over a 12 second reply. The microphone hears the agent's voice at a median of minus 37 dBFS; after echo cancellation the median is minus 67 dBFS, with brief jumps at the start of each sentence."
+    alt="Line chart over a 12 second reply. The microphone hears the agent's voice at a median of minus 37 dBFS; after echo cancellation the median is minus 67 dBFS, with brief jumps at speech onsets."
     width="594"
     height="266"
     loading="lazy"
     decoding="async"
   />
   <figcaption>
-    <strong>Figure 3.</strong> The agent's own voice, as the microphone hears it and after echo cancellation, for a four-sentence reply through MacBook speakers. Dashed lines are medians; sample by sample, cancellation makes it a median of 26 dB quieter. The brief jumps at the start of each sentence are the canceller adapting, which is why barge-in ignores the first half-second of every sentence.
+    <strong>Figure 3.</strong> The agent's own voice at the microphone and after echo cancellation (with WebRTC's noise suppression), for a four-sentence reply through MacBook speakers, measured every 200 ms. Dashed lines are medians; point by point, cancellation makes it a median of 26.5 dB quieter. The jumps are residual echo at speech onsets while the canceller catches up, which is why barge-in ignores the first half-second of each synthesised chunk.
   </figcaption>
 </figure>
 
-Your voice is not in the reference, so it passes straight through: about 160 ms of it stops playback with a short fade. In six test replies through MacBook speakers, five never came close to interrupting themselves; the sixth had one quarter-second burst louder than anything the speakers played, most likely room noise. A second voice talking over the reply stopped it in both of the tests I ran.
+Your voice is not in the reference, so it survives cancellation, and about 160 ms of it stops playback with a short fade. In six test replies through MacBook speakers, five never came close to interrupting themselves; the sixth had one quarter-second burst louder than anything the speakers played, most likely room noise. A second voice talking over the reply stopped it in both tests I ran.
 
 ## Only when you are looking
 
-A voice that talks while you are reading something else is worse than no voice, so orca-talkback only speaks when two things are true:
+A voice that talks while you read something else is worse than none, so orca-talkback only speaks when:
 
 1. **Orca is the app in front.** It checks twice a second, so switching to your browser cuts it off.
-2. **The agent is on screen.** That means the workspace you picked in Orca's sidebar, or the chat you just sent a prompt to. Orca does not tell plugins which chat is visible, and its focus signal follows the sidebar, so sending a chat a prompt is the most reliable sign you are looking at it.
+2. **The agent is on screen.** That is the workspace picked in Orca's sidebar, or the chat you just prompted. Orca does not tell plugins which chat is visible, so prompting a chat is the most reliable sign you are looking at it.
 
-Replies from anywhere else are never spoken, and never replayed later.
+Other replies are never spoken, or replayed later.
 
 ## Choosing a voice
 
-Before settling on a text-to-speech model, I compared the open models on Hugging Face's [Open TTS Leaderboard](https://huggingface.co/spaces/hf-audio/open_tts_leaderboard):
+To pick a voice, I compared the open models on Hugging Face's [Open TTS Leaderboard](https://huggingface.co/spaces/hf-audio/open_tts_leaderboard):
 
 | Model | Naturalness (UTMOS) | Word error rate | Size | License |
 |---|---|---|---|---|
@@ -103,7 +104,7 @@ Before settling on a text-to-speech model, I compared the open models on Hugging
 | [Reverb-TTS](https://huggingface.co/software-mansion/Reverb-TTS) | 4.45 | **0.65%** | 297M | CC-BY-NC-4.0 |
 | [Chatterbox](https://huggingface.co/ResembleAI/chatterbox) | 4.40 | 1.00% | 800M | MIT |
 
-Kokoro had the highest naturalness of the 56 English models, an error rate within 0.11 points of the best, and it is small and Apache-2.0. It also had the lowest error rate of 33 models on [VoiceHub's Seed-TTS-Eval](https://huggingface.co/datasets/kadirnar/voicehub-arena-seed-tts-eval).
+In November 2026, Kokoro had the highest UTMOS of the 56 models on the English Seed-TTS set and a word error rate 0.11 percentage points behind the best. UTMOS is a predicted naturalness score, not a human rating, so its 0.02 lead over Inflect-Mini-v3 is a tie; what decided it was being near the top on both while small and Apache-2.0. It also had the lowest word error rate (0.96%) of the 33 models on [VoiceHub's Seed-TTS-Eval](https://huggingface.co/datasets/kadirnar/voicehub-arena-seed-tts-eval).
 
 ## Try it
 
@@ -111,12 +112,12 @@ You need macOS on Apple Silicon, Orca 1.4.248 or newer, and [uv](https://docs.as
 
 ```bash
 uv tool install --python 3.14 orca-talkback
-orca-talkback setup   # adds the Claude Code hook, downloads the voice, checks your mic
-# Orca prints a fingerprint for the plugin's access; re-run with --approve <fingerprint>
+orca-talkback setup   # adds the Claude Code hook, downloads the voice (about 340 MB), checks your mic
 orca plugin install CallumJMac/orca-talkback-plugin
+# Orca prints a "Fingerprint: ap1-..." line; re-run the command with --approve and that fingerprint
 orca-talkback
 ```
 
-Then ask an agent something. There is no Homebrew step and there are no API keys: the voice model is downloaded once, then everything runs on your Mac, the microphone is only open while it speaks, and nothing is recorded.
+You can also install the plugin from Orca's Settings, Plugins. Then ask an agent something in an Orca chat. No Homebrew, no API keys: after the one-off voice download everything runs on your Mac, the microphone is only open while it speaks, and nothing is recorded.
 
 It is early, tested with Claude Code agents on an M4 Max, and I would love to hear how it works for you. Issues and pull requests are welcome on [GitHub](https://github.com/CallumJMac/orca-talkback).

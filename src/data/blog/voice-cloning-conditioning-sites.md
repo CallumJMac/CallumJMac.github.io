@@ -1,9 +1,10 @@
 ---
 pubDatetime: 2026-11-21T12:00:00Z
+modDatetime: 2026-11-22T12:00:00Z
 title: "Where Does a Cloned Voice Live? Prompts and Speaker Embeddings in Zero-Shot TTS"
 slug: voice-cloning-conditioning-sites
 featured: true
-description: "Zero-shot TTS systems condition on a speaker twice: an in-context acoustic prompt and a speaker embedding. I switched each route off across six systems, 31,989 utterances, to measure what each one carries."
+description: "Zero-shot TTS systems condition on a speaker twice: an in-context acoustic prompt and a speaker embedding. I switched these routes off in six systems (31,989 synthesised utterances) to measure what each one carries."
 tags:
   - TTS
   - Voice Cloning
@@ -11,35 +12,35 @@ tags:
   - Qwen
 ---
 
-Zero-shot voice cloning looks like one operation: give the model a few seconds of someone speaking, get new speech in their voice. Inside most systems it is two.
+Zero-shot voice cloning looks like one operation: give the model a few seconds of someone speaking, get new speech in their voice. Inside, most systems use two.
 
-The **acoustic prompt** places the reference recording in context, so the model continues it the way a language model continues a document. The **speaker embedding** compresses the same recording into one vector from a speaker-verification encoder. Systems also differ in where that vector enters. Some feed it to the autoregressive language model (LM) that generates speech tokens; others feed it only to the acoustic decoder that turns tokens into a waveform.
+The **acoustic prompt** places the reference recording in context for the model to continue, as a language model continues a document. The **speaker embedding** compresses the same recording into one vector from a speaker-verification encoder. Some systems feed that vector to the autoregressive language model (LM) that generates speech tokens; others feed it only to the acoustic decoder that turns tokens into a waveform.
 
-These choices get made, and changed between model versions, without anyone measuring what each route carries. CosyVoice 2 removed the embedding from its LM "to avoid information leaking", for example, but what that embedding had contributed was never quantified.
+These choices change between model versions without anyone measuring what each route carries. CosyVoice 2 removed the embedding from its LM "to avoid information leaking", but never quantified what it had contributed.
 
-So I treated the routes as experimental variables and switched them off. This post summarises the paper, *Speaker Identity Is Split Across Conditioning Sites* (preprint forthcoming). The code, job lists and every per-utterance score are [on GitHub](https://github.com/CallumJMac/conditioning-sites), and the [audio samples](/conditioning-sites/) cover every system.
+So I switched the routes off. This post summarises the paper, *Speaker Identity Is Split Across Conditioning Sites* (preprint forthcoming). Code, job lists and all per-utterance scores are [on GitHub](https://github.com/CallumJMac/conditioning-sites); the [audio samples](/conditioning-sites/) cover every system.
 
 The short version:
 
-- **Where the embedding enters decides whether identity survives without the prompt.** Systems whose LM receives the embedding lose 0.06 to 0.11 speaker similarity, or nothing. Decoder-only systems lose 0.18 to 0.24.
-- **Within one model, identity is split across the two sites, and the losses add up.** The prompt can stand in for the embedding at the LM, but not at the decoder.
-- **Prompts copy their recording, not just the speaker.** Removing them raises predicted naturalness on noisy prompts by up to 0.51, but the same metric also rises when *all* speaker information is removed, so that gain is not better cloning.
-- **Three references beat one**, by 0.02 to 0.04 similarity, in either route.
+- **Where the embedding enters predicts how much identity survives without the prompt.** Where the LM receives the embedding, systems lose 0.06 to 0.11 speaker similarity, or nothing; Chatterbox, the exception, breaks without its prompt. Decoder-only systems lose 0.18 to 0.24.
+- **Within one model, identity is split across the two sites, and the losses roughly add.** The prompt can stand in for the embedding at the LM, but not at the decoder.
+- **Prompts copy their recording, not just the speaker.** Removing them raises predicted naturalness on noisy prompts by up to 0.51, but the metric also rises when *all* speaker information is removed, so this is not better cloning.
+- **Three references beat one**, by 0.02 to 0.04 similarity in either route for Qwen3-TTS and CosyVoice 3. The prompt-only F5-TTS gets worse.
 
 ## The setup
 
 I compared two conditions in six open-weight systems:
 
 - **Full:** the system's usual prompt and embedding, both from one reference recording.
-- **x-vector only:** every piece of prompt-level conditioning removed, embedding kept.
+- **x-vector only:** all prompt-level conditioning removed, embedding (the x-vector) kept.
 
-The systems cover all three designs: the embedding entering the LM (Qwen3-TTS 0.6B and 1.7B, Chatterbox), both the LM and the decoder (CosyVoice-300M), or the decoder only (CosyVoice 3, XTTS-v2). F5-TTS, which has no embedding route at all, serves as a prompt-only control.
+The embedding enters the LM (Qwen3-TTS 0.6B and 1.7B, Chatterbox), both LM and decoder (CosyVoice-300M), or the decoder only (CosyVoice 3, XTTS-v2). F5-TTS, with no embedding route, is a prompt-only control in the reference-count comparison.
 
-There were two test sets. LibriTTS-R gives 34 speakers, each with one fixed 6-second audiobook reference. Seed-TTS-eval gives 1,088 items whose Common Voice prompts are noisier and more varied. In total I synthesised **31,989 utterances**.
+LibriTTS-R gives 34 speakers, each with one fixed 6-second audiobook reference; Seed-TTS-eval gives 1,088 items with noisier, more varied Common Voice prompts. I synthesised **31,989 utterances**: 25,509 for the cross-system and reference-count comparisons, 6,480 for the within-model factorial.
 
-The main metric is **SIM-o**: cosine similarity between speaker-verification embeddings of the output and a *held-out* recording of the same speaker, never used as a prompt. Scoring against a held-out recording matters. Scoring against the prompt itself would reward copying the prompt's microphone and room along with the voice.
+The main metric is **SIM-o**: cosine similarity between speaker-verification embeddings of the output and a *held-out* recording of the same speaker, never used as a prompt. Scoring against the prompt (**SIM-p**) would also reward copying its microphone and room. Naturalness is predicted by UTMOS, an automatic MOS predictor; intelligibility is Whisper-large-v3 word error rate.
 
-Targets and seeds are repeated measures, so speakers are the unit of analysis. Every effect below is a speaker-level mean with a bootstrap 95% confidence interval, tested with Wilcoxon signed-rank tests and Holm correction.
+Every effect is a speaker-level mean (targets and seeds are repeated measures) with a bootstrap 95% confidence interval, tested by Wilcoxon signed-rank with Holm correction.
 
 ## Across systems: an LM site keeps the voice
 
@@ -53,23 +54,23 @@ Targets and seeds are repeated measures, so speakers are the unit of analysis. E
     decoding="async"
   />
   <figcaption>
-    <strong>Figure 1.</strong> Removing prompt-level conditioning (x-vector only minus full). (a) Change in speaker similarity to a held-out recording. (b) Change in predicted naturalness. Speaker-level means with bootstrap 95% CIs; filled circles are clean LibriTTS-R prompts, open squares noisy Seed-TTS-eval prompts. Chatterbox's naturalness falls by 1.8, off the scale, because it stops producing intelligible speech.
+    <strong>Figure 1.</strong> Removing prompt-level conditioning (x-vector only minus full): change in (a) speaker similarity to a held-out recording and (b) predicted naturalness. Speaker-level means with bootstrap 95% CIs; filled circles are clean LibriTTS-R prompts, open squares noisy Seed-TTS-eval prompts. Chatterbox's naturalness falls by 1.8, off the scale, as its speech becomes unintelligible.
   </figcaption>
 </figure>
 
-The systems split cleanly by design (Figure 1a).
+Apart from Chatterbox, the systems split cleanly by design (Figure 1a).
 
-When the LM receives the embedding, identity largely survives losing the prompt. Qwen3-TTS loses 0.062 to 0.073 similarity on LibriTTS-R and 0.099 to 0.108 on Seed-TTS-eval, at both sizes. CosyVoice-300M loses nothing on LibriTTS-R (+0.017, not significant) and 0.068 on Seed-TTS-eval.
+When the LM receives the embedding, identity largely survives. Both Qwen3-TTS sizes lose 0.062 to 0.073 similarity on LibriTTS-R and 0.099 to 0.108 on Seed-TTS-eval. CosyVoice-300M loses nothing on LibriTTS-R (+0.017, not significant) and 0.068 on Seed-TTS-eval.
 
-When the embedding reaches only the decoder, losses are two to three times larger: 0.184 and 0.244 for CosyVoice 3, and 0.224 and 0.213 for XTTS-v2 (all p < 0.001 after correction).
+When it reaches only the decoder, losses are two to three times larger: 0.184 and 0.244 for CosyVoice 3, and 0.224 and 0.213 for XTTS-v2 (all p < 0.001 after correction).
 
-The cleanest comparison is within one family. CosyVoice 3 shares its predecessor's lineage and front end but dropped the embedding from the LM. Without a prompt, the successor loses 0.18 where CosyVoice-300M loses nothing.
+Within one family, CosyVoice 3 shares CosyVoice-300M's lineage and front end but, like CosyVoice 2, keeps the embedding out of the LM, and without a prompt on LibriTTS-R loses 0.18 where its predecessor loses nothing.
 
-Chatterbox is the exception. Its LM does receive an embedding, but without its speech prompt it produces unintelligible speech (96 to 98% word error rate), so the embedding alone is outside its operating regime. Every other system keeps its word error rate when the prompt goes.
+Chatterbox is the exception: its LM receives an embedding, but without its speech prompt it produces unintelligible speech (96 to 98% word error rate). No other system's word error rate suffers.
 
 ## Within one model: identity is split across sites
 
-The systems above differ in data, scale, tokenisers and decoders, so they cannot isolate the site itself. CosyVoice-300M can: it passes the *same* speaker embedding to both its LM and its flow-matching decoder. That allows a 2 × 2 × 2 factorial, switching the prompt, the LM embedding and the decoder embedding on and off independently, with text, reference, seed and decoding identical across all eight cells (6,480 utterances).
+Differences in data, scale, tokenisers and decoders stop the systems above isolating the site. CosyVoice-300M can: it passes the *same* embedding to its LM and its flow-matching decoder. That allows a 2 × 2 × 2 factorial switching the prompt, LM embedding and decoder embedding independently, with text, reference, seed and decoding identical across the eight cells (6,480 utterances).
 
 <figure>
   <img
@@ -81,29 +82,29 @@ The systems above differ in data, scale, tokenisers and decoders, so they cannot
     decoding="async"
   />
   <figcaption>
-    <strong>Figure 2.</strong> CosyVoice-300M site factorial: speaker similarity for every combination of prompt and embedding sites. Speaker-level means with bootstrap 95% CIs; 34 LibriTTS-R speakers and 268 Seed-TTS-eval prompt speakers.
+    <strong>Figure 2.</strong> CosyVoice-300M site factorial: speaker similarity for every combination of prompt and embedding sites. Means with bootstrap 95% CIs; 34 LibriTTS-R speakers and 268 Seed-TTS-eval prompt speakers.
   </figcaption>
 </figure>
 
-**Without the prompt, both sites carry identity, and the losses add.** On LibriTTS-R, removing the LM embedding costs 0.113 similarity and removing the decoder embedding costs 0.201. Removing both costs 0.310, close to their sum, which leaves similarity at the 0.14 floor of an unconditioned voice. Seed-TTS-eval shows the same pattern: 0.092, 0.181 and 0.272.
+**Without the prompt, both sites carry identity, and the losses add.** On LibriTTS-R, removing the LM embedding costs 0.113 similarity, the decoder embedding 0.201. Removing both costs 0.310, close to the sum of 0.314, leaving similarity near the 0.14 floor of an unconditioned voice. Seed-TTS-eval matches: 0.092, 0.181 and 0.272 (sum 0.273).
 
-**With the prompt, the two sites behave differently.** Removing the LM embedding no longer matters: −0.010 and −0.008, both within noise. Removing the decoder embedding still costs 0.070 and 0.057.
+**With the prompt, the sites differ.** Removing the LM embedding no longer matters (−0.010 and −0.008, within noise). Removing the decoder embedding still costs 0.070 and 0.057.
 
-So at the LM, the prompt and the embedding are *substitutes*. Both are context for generating speech tokens, and either is enough. At the decoder they are *complements*: the prompt's acoustic features do not replace the embedding.
+So at the LM, prompt and embedding are *substitutes*: either suffices as context for generating speech tokens. At the decoder they are *complements*: the prompt's acoustic features do not replace the embedding.
 
-This also explains the cross-system result. Switching off CosyVoice-300M's LM site moves its prompt-free change from +0.017 to −0.096, towards its decoder-only successor. Systems that condition both stages keep more identity without the prompt because losing the prompt costs them only one site's worth of speaker information.
+This may explain the cross-system result. Switching off CosyVoice-300M's LM site moves its prompt-free change on LibriTTS-R from +0.017 to −0.096, towards its decoder-only successor (−0.184). Systems conditioning both stages plausibly keep more identity without the prompt because they lose only one site.
 
-## Prompts carry the recording, and the naturalness metric rewards losing the voice
+## Prompts carry the recording, and the naturalness metric also rewards a generic voice
 
-Removing the prompt barely changes predicted naturalness on clean LibriTTS-R. On noisy Seed-TTS-eval prompts it raises it in every working system: +0.03 and +0.08 for the two Qwen3-TTS sizes, +0.13 for CosyVoice 3, +0.31 for CosyVoice-300M and +0.51 for XTTS-v2 (Figure 1b).
+Removing the prompt barely changes predicted naturalness on clean LibriTTS-R (−0.04 to +0.07 in working systems). On noisy Seed-TTS-eval prompts it rises in all: +0.03 and +0.08 for the two Qwen3-TTS sizes, +0.13 for CosyVoice 3, +0.31 for CosyVoice-300M and +0.51 for XTTS-v2 (Figure 1b).
 
-The prompt is importing its recording conditions. With the prompt, every system's output is closer to the specific prompt recording than to another recording of the same speaker. Removing the prompt shrinks that gap in all twelve system and dataset pairs. For XTTS-v2 on Seed-TTS-eval, the gap disappears entirely.
+The prompt imports its recording conditions. With it, every system's output is closer to the prompt recording than to another recording of the same speaker (SIM-p above SIM-o). Removing it shrinks that gap by 0.010 to 0.053 in all twelve system and dataset pairs, the confidence interval excluding zero in eleven. For XTTS-v2 on Seed-TTS-eval the gap falls to 0.001: nothing recording-specific remains.
 
-But the naturalness gain needs a caveat. In the factorial, removing *all* speaker information (prompt and both embeddings) raises predicted naturalness on Seed-TTS-eval from 4.04 to 4.35. UTMOS rewards a generic voice. A naturalness improvement that arrives together with an identity loss should not be read as better cloning, and that applies to any prompt-free conditioning result reported with an automatic naturalness predictor.
+But UTMOS also rewards a generic voice. In the factorial on Seed-TTS-eval the prompt-free cell scores 4.04; removing both embeddings too, so no speaker information remains, raises it to 4.35. A naturalness gain that arrives with an identity loss is not better cloning, a caveat for any prompt-free result scored by automatic predictors.
 
 ## More references help identity, not naturalness
 
-With three references instead of one, Qwen3-TTS and CosyVoice 3 gain 0.022 to 0.044 similarity in both routes, whether the references are concatenated into the prompt or averaged as embeddings (p < 0.005 for every system and route). Naturalness moves by at most 0.02.
+On LibriTTS-R, with three references instead of one (pooled over two selection strategies), Qwen3-TTS and CosyVoice 3 gain 0.022 to 0.044 similarity whether concatenated into the prompt or averaged as embeddings (p < 0.005 for every system and route). Naturalness moves by at most 0.02.
 
 | System         | Route                    | Δ similarity | Δ naturalness |
 | -------------- | ------------------------ | -----------: | ------------: |
@@ -115,13 +116,13 @@ With three references instead of one, Qwen3-TTS and CosyVoice 3 gain 0.022 to 0.
 |                | embedding (averaged)     |       +0.031 |        +0.013 |
 | F5-TTS         | prompt (concatenated)    |       −0.126 |        −0.722 |
 
-The prompt-only F5-TTS gets *worse* with a three-reference prompt, consistent with prompt length being something a model has to be trained for.
+The prompt-only F5-TTS gets *worse*, suggesting a model must be trained for prompt length.
 
 ## Listen
 
-One LibriTTS-R speaker, drawn at random with a fixed seed rather than picked for effect. Every model was asked to say the same new sentence, "I thanked him, but I was not deceived by his compliment."
+One LibriTTS-R item, drawn at random with a fixed seed. Every model says the same sentence: "I thanked him, but I was not deceived by his compliment."
 
-The models heard a **reference prompt** of the speaker reading a *different* sentence. Similarity is scored against a **held-out recording** that no model heard, so it rewards matching the voice, not copying the prompt.
+The models heard a **reference prompt** of the speaker reading a *different* sentence. Similarity is SIM-o (seed 42), scored against a **held-out recording** no model heard.
 
 **The speaker**
 
@@ -138,25 +139,25 @@ The models heard a **reference prompt** of the speaker reading a *different* sen
 <div class="listen-row"><p>Prompt + embedding: similarity 0.58</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/cosyvoice3_full.mp3"></audio></div>
 <div class="listen-row"><p>Embedding only: similarity 0.51</p><audio controls preload="none" src="/conditioning-sites/samples/3729_6852_000078_000003/cosyvoice3_xvector_only.mp3"></audio></div>
 
-On this sentence, Qwen3-TTS actually scores *higher* without the prompt, while CosyVoice 3 loses 0.07. Single sentences vary: across all 34 speakers the averages are −0.07 and −0.18 (Figure 1). Similarity here is the per-clip SIM-o from the released scores.
+Here Qwen3-TTS scores *higher* without the prompt and CosyVoice 3 loses 0.07. Single clips vary: the 34-speaker averages are −0.07 and −0.18 (Figure 1).
 
-The [demo page](/conditioning-sites/) has a second LibriTTS-R speaker, two noisy Seed-TTS-eval prompts, every system and all eight factorial cells.
+The [demo page](/conditioning-sites/) adds a second LibriTTS-R speaker, two noisy Seed-TTS-eval prompts, every system and all eight factorial cells.
 
 ## What this means if you build with these models
 
-- **Removing the embedding from the LM is cheap only while a prompt is always present.** With a prompt, the LM embedding made no measurable difference. Without one, it was a third of the identity. Prompt-free, streaming and cross-lingual use, where the prompt is absent, short or mismatched, all depend on it.
+- **In CosyVoice-300M, removing the embedding from the LM is cheap only while a prompt is always present.** With a prompt, the LM embedding made no measurable difference; without one, it accounted for about a third of the similarity lost when both embeddings went (0.113 of 0.310). Streaming or cross-lingual use, where the prompt is short or mismatched, plausibly depends on it too (untested).
 - **For prompt-free cloning, condition both stages.**
-- **Treat speaker embeddings as identity-bearing data.** In systems that condition the LM on it, an embedding alone reproduces much of a voice. A leaked embedding can act as a voice credential, so it deserves the same care as a recording.
+- **Treat speaker embeddings as identity-bearing data.** Where the LM receives it, an embedding alone reproduces much of a voice (by automatic similarity), so a leaked one can act as a voice credential, as a recording can.
 - **Don't trust automatic naturalness gains that coincide with identity loss.** Check similarity against a held-out recording, not the prompt.
 
-This connects to the [Qwen3-TTS serving series](/posts/qwen-tts-streaming/). Qwen3-TTS kept most of a voice in its x-vector-only mode, which also removes the reference recording from the model's context. I have not measured what that does to time to first audio. It is a natural next experiment for a voice service that clones from stored speaker profiles.
+This connects to the [Qwen3-TTS serving series](/posts/qwen-tts-streaming/): Qwen3-TTS kept most of its speaker similarity in x-vector-only mode, which also removes the reference recording from context. Its effect on time to first audio is unmeasured, and a natural next experiment for a voice service cloning from stored speaker profiles.
 
 ## Limitations
 
-The causal factorial covers one model. The cross-system pattern rests on four working systems and system-specific interventions. Zeroing an embedding leaves the downstream projection bias, a standard but not unique ablation.
+The causal factorial covers one model; the cross-system pattern rests on four working systems and system-specific interventions. Zeroing an embedding leaves the downstream projection bias, a standard but not unique ablation.
 
-Every effect here is measured with automatic metrics. A paired listening study is in preparation. Evaluation is English only, Seed-TTS-eval uses a single seed, and the pathway study uses one reference length.
+All metrics are automatic; a paired listening study is in preparation. Evaluation is English only, with one Seed-TTS-eval seed and one cross-system reference length.
 
 ## Reproduce it
 
-The per-utterance scores are in the [repository](https://github.com/CallumJMac/conditioning-sites), so every table and figure in the paper rebuilds in about two minutes without a GPU. `make check` recomputes the analysis and fails on any change, and runs on every push. The figures in this post come from `scripts/blog_figures.py`, which reads only the released analysis tables.
+With the per-utterance scores in the [repository](https://github.com/CallumJMac/conditioning-sites), every table and figure in the paper rebuilds in about two minutes without a GPU. `make check`, run on every push, recomputes the analysis and fails on any change. This post's figures come from `scripts/blog_figures.py`, which reads only the released analysis tables.

@@ -1,5 +1,6 @@
 ---
 pubDatetime: 2024-04-24T00:00:00Z
+modDatetime: 2026-11-22T00:00:00Z
 title: "Implementing RAG in LangChain with Chroma: A Step-by-Step Guide"
 slug: rag-langchain-intro
 description: "A step-by-step guide to building a Retrieval-Augmented Generation system using LangChain, Chroma, and OpenAI embeddings."
@@ -18,7 +19,7 @@ tags:
 
 ## Introduction
 
-In natural language processing, Retrieval-Augmented Generation (RAG) has emerged as a powerful technique for generating contextually relevant responses that are dense in information. This technique is often used when building LLM systems that are required to retrieve information from large bodies of text that are rich in complex information. In this blog post, we will explore how to implement RAG in LangChain, a useful framework for simplifying the development process of applications using LLMs, and integrate it with Chroma to create a vector database. This step-by-step guide will walk you through the process of setting up the environment, preparing the data, implementing RAG, and creating a vector database with Chroma.
+Retrieval-Augmented Generation (RAG) grounds an LLM's answers in documents it was not trained on, by retrieving relevant passages at query time and including them in the prompt. It is a common pattern when an LLM system must answer questions over a large body of private or specialised text. In this post, I implement RAG with LangChain, a framework for building applications around LLMs, using Chroma as the vector database. We will set up the environment, prepare the data, build the vector database and query it.
 
 <p align="center">
   <img src="/images/2_rag/rag_overview.jpg" alt="RAG EXPLAINED OVERVIEW RETRIEVAL AUGMENTED GENERATION" />
@@ -29,11 +30,11 @@ In natural language processing, Retrieval-Augmented Generation (RAG) has emerged
 Figure 2 shows an overview of RAG. The first step is data preparation (highlighted in yellow) in which you must:
 1) Collect raw data sources.
 
-2) Extract the raw text data (using OCR, PDF, web crawlers etc.).
+2) Extract the raw text (using OCR, PDF parsers, web crawlers etc.).
 
 3) Split the text into appropriate length chunks.
 
-4) Compute an embedding to be stored in the vector database.
+4) Compute an embedding for each chunk and store it in the vector database.
 
 
 Once the vector database has been created, you can query the system (highlighted in green):
@@ -41,58 +42,30 @@ Once the vector database has been created, you can query the system (highlighted
 
 2) An embedding is computed for the query.
 
-3) Search the vector database for contextually relevant data.
+3) Search the vector database for the chunks most similar to the query.
 
-4) Give the relevant context and query to an LLM
+4) Give the retrieved context and the query to an LLM.
 
-5) Return a contextually enriched response to the user. 
+5) Return the grounded response to the user.
 
 
 ### Understanding RAG and LangChain
 
-This approach combines retrieval-based methods with generative models to produce responses that are not only coherent but also contextually relevant. LangChain provides a flexible and scalable platform for building and deploying advanced language models, making it an ideal choice for implementing RAG, but another useful framework to use is LlamaIndex. 
+RAG combines a retriever with a generative model: the retriever finds relevant text, and the LLM uses it to answer. LangChain provides building blocks (document loaders, text splitters, embedding wrappers, vector store integrations and LLM clients) that make this quick to prototype; LlamaIndex is a popular alternative.
 
-RAG involves supplementing an LLM with additional information retrieved from elsewhere to improve the model's responses. There are many different approaches to deploying an effective RAG system. Finding the most effective system requires extensive experimentation to optimize each component, including data collection, model embeddings, chunking method and prompting templates. Nonetheless, most systems follow similar design principles and I will provide that overview in the blog post.
+There are many ways to build an effective RAG system, and finding the best one requires experimenting with each component: data collection, embedding model, chunking method and prompt template. Most systems follow the same design, which I walk through below.
 
 ## Setting up the Environment
 
-Before diving into the implementation, you will need to set up your development environment. Install the relevant dependencies and activate this environment.
-Prerequisites:
-Before you begin, make sure you have the following installed on your system:
-- Python (3.x recommended)
-- virtualenv or venv (usually comes pre-installed with Python)
-
-Steps:
-- Clone your project repository from the remote repository using Git. If you don't have a repository yet, create one and initialize it with your project files.
+Create a virtual environment and install the dependencies (the [repo](https://github.com/CallumJMac/lessons/blob/main/1.%20RAG/rag.ipynb) contains the code for this post):
 
 ```bash
-git clone <repository_url>
-cd <project_directory>
-```
-- Create a Virtual Environment: Navigate to your project directory and create a new virtual environment using either virtualenv or venv. Replace <environment_name> with your desired environment name.
-
-
-```bash
-# Using venv (Python 3)
-python3 -m venv <environment_name>
-```
-
-- Activate the Environment: Activate the virtual environment you just created
-
-```bash
-# On Windows
-<environment_name>\Scripts\activate
-# On Unix or MacOS
-source <environment_name>/bin/activate
-```
-
-- Install Dependencies: Install project dependencies using pip. You can do this by using the requirements.txt file.
-
-```bash
-# Use the requirements.txt file
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
-- Work on the Project: You can run the project within the activated virtual environment. All dependencies will be isolated to this environment, ensuring no conflicts with other projects.
+
+You will also need an OpenAI API key in a `.env` file (`OPENAI_API_KEY=...`), which `load_dotenv()` reads below.
 
 ## Implementation: Step-by-Step
 
@@ -107,6 +80,7 @@ from langchain.schema import Document  # Importing Document schema from Langchai
 from langchain.vectorstores.chroma import Chroma  # Importing Chroma vector store from Langchain
 from dotenv import load_dotenv # Importing dotenv to get API key from .env file
 from langchain.chat_models import ChatOpenAI # Import OpenAI LLM
+from langchain.prompts import ChatPromptTemplate # Import prompt template
 
 
 import os  # Importing os module for operating system functionalities
@@ -115,7 +89,7 @@ import shutil  # Importing shutil module for high-level file operations
 
 ### 2: Loading in the Data
 
-For further information on how to load data from other types of files see the [LangChain docs](https://python.langchain.com/docs/modules/data_connection/document_loaders/). Full guides can be found on loading in files such as `.csv`, `.html`, `.json` and more!
+For further information on how to load data from other types of files see the [LangChain docs](https://docs.langchain.com/oss/python/integrations/document_loaders). There are loaders for `.csv`, `.html`, `.json` and many more.
 
 ```python
 # Directory to your pdf files:
@@ -138,9 +112,9 @@ print(documents[0])
 
 ### 3: Chunking
 
-In RAG systems, "chunking" refers to the segmentation of input text into shorter and more meaningful units. This enables the system to efficiently pinpoint and retrieve relevant pieces of information. The quality of chunks are **essential** to how effective your system will be.
+In RAG systems, "chunking" means splitting the text into shorter units that are each embedded and retrieved independently. This lets the system pinpoint the relevant passages rather than whole documents. Chunk quality is **essential** to how well your system performs.
 
-The most important thing to consider when deciding a chunking strategy is the structure of the documents that you are loading into your vector database. If the documents contain similar-length paragraphs, it would be useful to consider this when determining the size of the chunk.
+The most important consideration is the structure of your documents. For example, if they consist of similar-length paragraphs, sizing chunks around a paragraph keeps each chunk on a single topic. `RecursiveCharacterTextSplitter` helps here: it tries to split on paragraph breaks first, then lines, then spaces, so chunks tend to end at natural boundaries.
 
 ```python
 def split_text(documents: list[Document]):
@@ -172,20 +146,20 @@ def split_text(documents: list[Document]):
     return chunks  # Return the list of split text chunks
 ```
 
-If your `chunk_size` is too large, then you will be inputing a lot of noisy and unwanted context to the final LLM query. Further, as LLMs are limited by their context window size, the larger the chunk, the fewer pieces of relevant information you can include as context to your query. 
+Because `length_function=len`, `chunk_size` is measured in characters, not tokens (300 characters is roughly 50 to 75 English words). If chunks are too large, a single embedding has to summarise several topics, which blurs retrieval, and you pass more irrelevant text to the LLM; you can also fit fewer chunks into the context window. If chunks are too small, each one may lack the context needed to be understood or to answer the question.
 
-The `chunk_overlap` refers to intentionally duplicating tokens at the beginning and end of each adjacent chunk. This helps retain additional context from neighbouring chunks which can improve the quality of the information passed into the prompt. 
+`chunk_overlap` is the maximum number of characters shared between consecutive chunks (here up to 100). Overlap reduces the chance that a sentence or idea is cut in half at a chunk boundary, at the cost of some duplicated storage and retrieved text.
 
-When deploying these systems to real-world applications, it is important to plot distributions of text lengths in your data, and tune these parameters based on experimentation of parameters such as `chunk_size` and `chunk_overlap`.
+For real applications, plot the distribution of text lengths in your data and tune `chunk_size` and `chunk_overlap` experimentally.
 
 
 ### 4: Creating a Vector Database with Chroma
 
-In order to turn your text data into embeddings, you need an *embedding model*. This is a pre-trained model to transform the text into a vector of numbers. This is a high-dimensional representation of the text in embedding space, where each dimension corresponds to a specifific semantic or syntactic feature of the word.
+To turn your text into embeddings, you need an *embedding model*: a pre-trained model that maps a piece of text to a fixed-length vector. The model is trained so that texts with similar meaning end up close together in this high-dimensional space. Individual dimensions are not interpretable on their own; meaning is captured by the vector as a whole, which is why we compare vectors with measures such as cosine similarity.
 
-The choice of the embedding model used impacts the overall efficacy of the system, however, [some engineers](https://gradientflow.substack.com/p/best-practices-in-retrieval-augmented) note that the choice of embedding model often has less of an impact than the choice of chunking strategy. Further, selecting the largest and most powerful LLMs is not always the most effective for creating the vector database. The same [engineers](https://gradientflow.substack.com/p/best-practices-in-retrieval-augmented) found that smaller models can outperform top-ranked state-of-the-art models for specific tasks. Therefore, you may be able to reduce computational cost without sacrificing on overall system effectiveness.
+The choice of the embedding model used impacts the overall efficacy of the system, however, [some engineers](https://gradientflow.substack.com/p/best-practices-in-retrieval-augmented) note that the choice of embedding model often has less of an impact than the choice of chunking strategy. The same article notes that the largest, top-ranked embedding models are not always best: smaller models can outperform them on specific tasks, so you may be able to cut cost without losing effectiveness.
 
-In the example provided, I am using Chroma because it was designed for this use case. However, there are some [tools](https://github.com/pgvector/pgvector) to use relational databases such as PostgreSQL. We have used OpenAIEmbeddings API which requires an API key:
+I use Chroma because it is designed for this use case, but extensions such as [pgvector](https://github.com/pgvector/pgvector) let you store and search vectors in PostgreSQL. I use the OpenAI embeddings API, which requires an API key:
 
 ```python
 # Path to the directory to save Chroma database
@@ -217,11 +191,10 @@ def save_to_chroma(chunks: list[Document]):
     print(f"Saved {len(chunks)} chunks to {CHROMA_PATH}.")
 ```
 
- I encourage experimentation with open-sourced models such as Llama3 (try the 8B parameter version first, especially if your system needs to be 100% local). If you are working on a very niche or nuanced use case, off-the-shelf embedding models may not be useful. Therefore, you might want to investigate fine-tuning the embedding model on the domain data to improve the retrieval quality. 
+I encourage experimenting with open embedding models, especially if your system needs to run fully locally. Sentence Transformers models (such as `all-MiniLM-L6-v2`) and families such as BGE, E5 and Nomic Embed can be used through LangChain's Hugging Face or Ollama embedding integrations, and the [MTEB leaderboard](https://huggingface.co/spaces/mteb/leaderboard) is a useful starting point for comparing them. Note that a generative LLM such as Llama 3 is not a drop-in embedding model; use a model trained for embeddings. Whichever model you choose, you must use the same one to embed both the documents and the queries. For very niche domains, off-the-shelf embedding models may retrieve poorly, and fine-tuning the embedding model on domain data can improve retrieval quality.
 
 
- ```python
-
+```python
 def generate_data_store():
     """
     Function to generate vector database in chroma from documents.
@@ -239,13 +212,13 @@ generate_data_store()
 
 ### 5: Query the vector database and the LLM
 
- First, we need to identify what question we need the answer from our PDF. The PDF used in this example was my MSc Thesis on using Computer Vision to automatically track hand movements to diagnose Parkinson's Disease. Therefore, let's ask the system to explain one of the methods used in the paper. I used an object detection method to predict bounding box coordinates around the hand in the image to remove unnecessary pixels, the method used was YOLOv4. Therefore, we will ask the model to explain how the YOLO method works:
+First, we need a question to answer from our PDF. The PDF in this example is my MSc thesis on using computer vision to track hand movements automatically to diagnose Parkinson's disease. I used an object detector, YOLOv4, to predict a bounding box around the hand and crop away unnecessary pixels, so let's ask the system to explain how YOLO works:
 
- ```python
- query_text = "Explain how the YOLO method works"
- ```
+```python
+query_text = "Explain how the YOLO method works"
+```
 
-Ok, now that we have defined our query, we need to define a prompt template to input to the LLM that will generate the final response. As you can see by the `PROMPT_TEMPLATE` variable below, the structure is intuitive and simple. First, we provide `{context}` to the LLM which is the information that we have **retrieved** from our chroma database. Then, we **augment** the context with our `{question}` to the LLM to **generate** a contextually enhanced response. It's way simpler than it sounds, right?
+Next, we define the prompt template for the LLM that generates the final response. The structure of `PROMPT_TEMPLATE` below is simple: `{context}` is filled with the chunks **retrieved** from our Chroma database, the prompt is **augmented** with that context alongside the user's `{question}`, and the LLM uses both to **generate** a grounded response.
 
 ```python
 PROMPT_TEMPLATE = """
@@ -261,18 +234,21 @@ Answer the question based on the above context: {question}
 
 We have defined our query and prompt template. Let's put it all together!
 
-In RAG systems, finding the most useful and relevant information in the database as fast as possible are the two objectives you want to optimize for when finetuning. The main approaches for retrieving data from the vector database are:
+When tuning retrieval, you want to find the most relevant information, quickly. The main retrieval approaches are:
 
-1) **Term-based matching**: identifies keywords from questions and matches them to relevant chunks using term statistics. This method is usually simpler and requires less preprocessing. 
+1) **Term-based (lexical) search**: scores chunks by overlapping terms, weighted by term statistics (for example BM25, which uses term frequency and inverse document frequency). It needs no embedding model and excels at exact matches such as names, acronyms and identifiers, but misses paraphrases and synonyms.
 
-2) **Vector-similarity search**: computes a distance metric between the query vectors and indexed vectors in the database. This method is more effective typically for retrieving contextually relevant information to the prompt.
+2) **Vector-similarity search**: embeds the query and finds the nearest chunk embeddings by a similarity or distance measure (such as cosine similarity), usually with an approximate nearest neighbour index. It captures semantic similarity even when wording differs, but can miss rare exact terms.
 
-3) **Hybrid search**: integrates term-based and vector similarity for more comprehensive results.
+3) **Hybrid search**: combines lexical and vector results, for example by fusing their rankings with reciprocal rank fusion, to get the strengths of both.
 
-In this example, we are going to use Vector-similarity search. However, it is strongly advised that the optimal method and parameters are found experimentally to tailor the system to your domain and use case. Some other tuneable parameters to be found experimentally are:
+In this example, we use vector-similarity search, retrieving the top `k=3` chunks. The best method and parameters should be found experimentally for your domain. Other parameters to tune include:
+- `k`, the number of chunks retrieved
 - the relevance score threshold (we set ours to 0.7 arbitrarily)
-- the LLM (base vs. tuned)
-- prompt template
+- the LLM (base vs. fine-tuned)
+- the prompt template
+
+`similarity_search_with_relevance_scores` converts Chroma's vector distance into a relevance score intended to lie between 0 and 1, where higher means more similar. The 0.7 check in the code only looks at the best match: if even the top chunk scores below it, we treat the question as unanswerable from our data. The score is not a probability that a chunk is relevant, and its typical range depends on the embedding model and distance metric, so calibrate the threshold on your own queries rather than reusing 0.7.
 
 ```python
 def query_rag(query_text):
@@ -297,7 +273,8 @@ def query_rag(query_text):
     
     # Check if there are any matching results or if the relevance score is too low
     if len(results) == 0 or results[0][1] < 0.7:
-        print(f"Unable to find matching results.")
+        print("Unable to find matching results.")
+        return None, None
 
     # Combine context from matching documents
     context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
@@ -331,20 +308,20 @@ print(response_text)
   <em>Figure 3: RAG System output to query: "Explain how the YOLO method works"</em>
 </p>
 
-The generated response (shown in Figure 3) accurately describes YOLO using information retrieved from my thesis! The prototype has been built and seems to work well. There are several questions that we are now left with as engineers:
-- How well does the system work?
-- How would we even go about quantifying how much better the RAG-enabled LLM was vs. the original LLM?
-- When fine0tuning the RAG parameters (such as chunking method, prompt template, LLM agent used) how do we know if the changes made have improved or worsened the responses?
+The response in Figure 3 describes YOLO using information retrieved from my thesis. The prototype works on this example, but it leaves several questions:
+- How well does the system work in general?
+- How do we quantify how much better the RAG-enabled LLM is than the LLM alone?
+- When tuning the RAG parameters (such as chunking method, prompt template or LLM), how do we know whether a change improved or worsened the responses?
 
 ### 6: Evaluation
 
-We have created a prototype using arbitrary values. The next project we would need to undertake would be finding the optimal combination of chunking logic, embedding model, LLM response agent. Generative tasks such as this are extremely difficult to quantitatively evaluate. Therefore, we need to propose a method for this to be implemented in a future blog.
+The prototype uses arbitrary values. The next step is finding the best combination of chunking logic, embedding model and LLM, which requires a way to measure quality. Generative outputs are hard to evaluate quantitatively, so here I sketch an approach to develop in a future post.
 
-We have a complex and multi-stage system with many interchangeable parts. Therefore, it is recommended that we undertake an evaluation of each component in isolation and end-to-end evaluation:
-- **Component-wise evaluation**: for example compare embedding methods,  retrieval methods,  LLM response methods, and even the raw data sources.
+Because the system has several interchangeable stages, evaluate each component in isolation as well as end to end:
+- **Component-wise evaluation**: for example, compare embedding models and retrieval methods using standard retrieval metrics (such as recall@k or mean reciprocal rank) on questions with known relevant chunks, and compare LLMs and prompts given fixed context.
 - **End-to-end evaluation**: assess the quality of the entire system.
 
-Further, I recommend writing unit tests that query an LLM with expected and actual responses from the RAG system. For example, we could use the following evaluation prompt, logic and unit test pseudocode:
+I also recommend writing tests that ask an LLM to judge whether the RAG system's actual response matches an expected response. For example, using the following evaluation prompt, logic and test pseudocode:
 
 ```python
 # Template for evaluation prompt
@@ -352,20 +329,25 @@ EVAL_PROMPT = """
 Expected Response: {}
 Actual Response: {}
 ###
-(Answer with 'True' or 'False: Does the actual response match the expected response?)
+(Answer with 'True' or 'False': Does the actual response match the expected response?)
 """
 
-# Strip leading/trailing whitespaces and convert to lowercase
-retrieval_test_response = evaluation_results_str.strip().lower()
+def query_and_validate(prompt: str, expected_response: str) -> bool:
+    _, actual_response = query_rag(prompt)
+    eval_prompt = EVAL_PROMPT.format(expected_response, actual_response)
+    evaluation_results_str = ChatOpenAI().predict(eval_prompt)
 
-# Check if "true" or "false" is present in the response
-if "true" in retrieval_test_response:
-    return True
-elif "false" in retrieval_test_response:
-    return False
-else:
-    # Raise an error if neither "true" nor "false" is found
-    raise ValueError("Did not return true or false")
+    # Strip leading/trailing whitespace and convert to lowercase
+    retrieval_test_response = evaluation_results_str.strip().lower()
+
+    # Check if "true" or "false" is present in the response
+    if "true" in retrieval_test_response:
+        return True
+    elif "false" in retrieval_test_response:
+        return False
+    else:
+        # Raise an error if neither "true" nor "false" is found
+        raise ValueError("Did not return true or false")
 
 def test_retrieval_response():
     # Test function to validate retrieval response
@@ -375,17 +357,17 @@ def test_retrieval_response():
     )
 ```
 
-This would need to be formalised and developed further. However, it gives a good starting point for testing RAG systems.
+This needs formalising, but it is a good starting point for testing RAG systems.
 
-There is a chance that a generous LLM might pass incorrect responses, therefore also consider negative test cases. I.e. assert that the expected response (one that is wrong) does not equal the actual response. 
+A lenient LLM judge might pass incorrect responses, so also add negative test cases: supply a deliberately wrong expected response and assert that the judge returns `False`.
 
 ## Conclusion
 
-In this blog, I have introduced the concept of Retrieval-Augmented Generation and provided an example of how to query a .pdf file using LangChain in Python. I have also introduced the concept of how RAG systems could be finetuned and quantitatively evaluate the responses using unit tests. 
+In this post, I introduced Retrieval-Augmented Generation and showed how to query a PDF using LangChain and Chroma in Python. I also outlined how to tune a RAG system and evaluate its responses quantitatively with component-wise metrics and LLM-judged tests.
 
 ### Links
 [Github repo](https://github.com/CallumJMac/lessons/blob/main/1.%20RAG/rag.ipynb) for this blog.
 
-Original [RAG paper](https://arxiv.org/abs/2005.11).
+Original [RAG paper](https://arxiv.org/abs/2005.11401) (Lewis et al., 2020).
 
 Connect with me on [LinkedIn](https://www.linkedin.com/in/callumjmac/) for enquiries.
