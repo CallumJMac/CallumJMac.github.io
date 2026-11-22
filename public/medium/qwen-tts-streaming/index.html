@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>How to Build a Low-Latency Streaming Qwen3-TTS Server</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Turning Qwen3-TTS into a deployable AWS streaming service with CUDA graphs and FastAPI WebSockets, then measuring where first-audio latency actually goes.">
+<link rel="canonical" href="https://callumjmac.github.io/posts/qwen-tts-streaming/">
+</head>
+<body>
+<article>
+<h1>How to Build a Low-Latency Streaming Qwen3-TTS Server</h1>
+<p><em>Turning Qwen3-TTS into a deployable AWS streaming service with CUDA graphs and FastAPI WebSockets, then measuring where first-audio latency actually goes.</em></p>
+<p>The released Qwen3-TTS Python API returns a complete waveform: fine for offline synthesis, but it hides the model's causal audio path from latency-sensitive applications.</p>
+<p>I built a streaming service around the 0.6B model, deployed it on AWS, and measured it:</p>
+<ul>
+<li>On an A10G behind an Application Load Balancer, the first audio byte arrived in <strong>187 to 189ms at p50</strong>.</li>
+<li>CUDA graphs cut generation time per codec frame by <strong>4.7 to 4.9×</strong> compared with the official path.</li>
+<li>First-audio latency grows by about <strong>29ms per codec frame</strong> in a packet. One-frame packets reached <strong>108ms</strong>.</li>
+<li>Every clip starts with about <strong>420ms of silence</strong>, so the listener hears speech <strong>0.5 to 0.6s</strong> after the request with packets of one to four frames.</li>
+</ul>
+<p>The server, Terraform, per-request records and <a href="https://github.com/CallumJMac/qwen-tts-serve/tree/main/experiments/blog_analysis">analysis scripts</a> are <a href="https://github.com/CallumJMac/qwen-tts-serve">open source</a>. A <a href="https://callumjmac.github.io/posts/qwen-tts-at-scale/">companion capacity study</a> covers behaviour under load.</p>
+<h2>Why Qwen3-TTS?</h2>
+<p>Qwen3-TTS is small enough for one 24GB A10G, supports voice cloning, and represents audio at only 12.5 codec frames per second (80ms of audio per frame). Fewer frames mean fewer autoregressive steps.</p>
+<p>Its codec decoder is causal, turning completed frames into audio without waiting for future ones. That enables real streaming.</p>
+<h2>CUDA graphs, intuitively</h2>
+<p>Each codec frame holds 16 tokens, one per codebook, produced by two autoregressive transformers:</p>
+<ol>
+<li>The <strong>talker</strong> (28 layers) predicts the frame's first token in one decoding step.</li>
+<li>The <strong>code predictor</strong> (5 layers) fills in the other 15 in 15 sequential steps.</li>
+</ol>
+<p>That is 16 dependent forward passes per frame at batch size one, each of many small kernels. Launched one by one from Python, they can cost more CPU time than GPU compute, leaving the GPU idle.</p>
+<p>A CUDA graph records a fixed sequence of kernel launches once, then replays it with one CPU call. Replay reuses the captured shapes and memory addresses, so everything inside a graph must be static.</p>
+<p><a href="https://github.com/andimarafioti/faster-qwen3-tts"><code>faster-qwen3-tts</code></a> captures graphs for both stages. Prefill of the variable-length text prompt runs outside them. KV caches are preallocated at a fixed maximum length, so every replay reads and writes the same buffers.</p>
+<figure>
+<img alt="Diagram contrasting repeated Python and CPU kernel launches with CUDA graph capture and single-launch replay. Variable-length prefill remains outside the graph." src="https://callumjmac.github.io/medium/qwen-tts-streaming/figure-1.png"/>
+<figcaption>
+<strong>Figure 1.</strong> A CUDA graph records fixed-shape execution once and replays it with one launch per generation step; prefill stays outside. It is a recording of kernel launches, not the model's computational graph.
+  </figcaption>
+</figure>
+<p>With <code>chunk_size=4</code> (the client default), the server decodes and yields 320ms of audio every four completed frames:</p>
+<pre><code class="language-python">for audio, sample_rate, _timing in model.generate_custom_voice_streaming(
+    text=text,
+    speaker="ryan",
+    language="English",
+    chunk_size=4,
+):
+    yield audio.astype(np.float32), sample_rate
+</code></pre>
+<p>This is frame-level streaming: audio leaves the server while later frames are still generating. The official backend can only "generate everything, then slice".</p>
+<h2>The service</h2>
+<p>The API is small:</p>
+<pre><code class="language-text">Client → WebSocket: {"text": "Hello world", "language": "English", "chunk_size": 4}
+Server → Client:    [float32 PCM chunk]
+Server → Client:    [float32 PCM chunk]
+Server → Client:    {"done": true, "sample_rate": 24000}
+</code></pre>
+<p>FastAPI handles the WebSocket while the synchronous GPU generator runs in a thread executor. The client depends only on <code>websockets</code> and <code>numpy</code>, not PyTorch or CUDA.</p>
+<p>The Base model also supports prompt-based voice cloning: a client registers a short reference clip once, then passes its <code>voice_id</code> in later requests. References live on local disk and disappear with the container.</p>
+<h2>Deploying it on AWS</h2>
+<p>The Docker image bakes in the weights: <strong>6.9GB compressed in ECR</strong>, but startup does not depend on a Hugging Face download.</p>
+<p>Terraform creates:</p>
+<ul>
+<li>ECR for the image;</li>
+<li>ECS on EC2, because Fargate does not expose GPUs;</li>
+<li>GPU-backed EC2 capacity (<code>g5.xlarge</code> in this test); and</li>
+<li>an Application Load Balancer for the WebSocket.</li>
+</ul>
+<p>CUDA graph capture makes the first inference slow, so the server warms up before its health endpoint returns <code>200</code>, moving the cold start into deployment rather than a user's first request.</p>
+<p>The one-instance deployment hit a rolling-update trap: ECS kept the old task running while placing the replacement, but the old task held the only GPU, stalling the deployment until I stopped it manually. Capacity and deployment policy must leave room for a replacement.</p>
+<h2>Measured results</h2>
+<p>I ran the official and CUDA-graph engines one after the other on the same <code>g5.xlarge</code>: 0.6B CustomVoice model, fixed seed <code>20260714</code>, three inputs, three warm-ups, then 30 recorded runs per condition.</p>
+<p>A client container on the same EC2 host measured endpoint latency through the ALB. Time to first audio (TTFA) runs from just before a request is sent on an established WebSocket to the first binary audio frame, so it excludes public-internet and connection-setup time.</p>
+<img alt="Input Official RTF p50 CUDA graph RTF p50 Speedup per frame Deployed TTFA p50 [95% CI] Short (5 words) 1.71× 0.36× 4.7× 187.0ms [186.8, 187.4] Medium (~40 words) 1.70× 0.35× 4.9× 188.3ms [188.0, 188.5] Long (~150 words) 1.71× 0.35× 4.9× 188.8ms [188.2, 189.3]" src="https://callumjmac.github.io/medium/qwen-tts-streaming/table-1.png"/>
+<p>Real-time factor (RTF) is wall-clock generation time divided by audio duration; below 1.0 is faster than playback. Both RTF columns are full, non-streaming generation. As every frame is 80ms of audio, RTF converts directly to cost per frame: about <strong>28 to 29ms</strong> with CUDA graphs against <strong>136ms</strong> officially, and their ratio is the per-frame speedup.</p>
+<p>The engines sampled different token sequences: CUDA-graph outputs were 6 to 20% shorter for the same text. Same-text wall-clock time improved by more, 5.2 to 5.9×, partly because fewer frames were generated, so per-frame cost is the fair measure of the engine.</p>
+<p>Intervals are bootstrap 95% CIs over the 30 runs. With a fixed seed, each prompt's audio duration was constant, so the intervals capture timing noise on this host, not variation across prompts or machines.</p>
+<p>The streaming endpoint's RTF is higher, 0.44 to 0.45, because decoding many small chunks costs more than one decode at the end. For a conversational agent, earlier audio is worth it.</p>
+<p>Hardware and software: NVIDIA A10G 24GB (<code>g5.xlarge</code>), driver 550.163.01, PyTorch 2.6.0 + CUDA 12.4, <code>qwen-tts</code> 0.1.1, <code>faster-qwen3-tts</code> 0.2.6, <code>chunk_size=4</code>.</p>
+<h2>Where first-audio latency goes</h2>
+<p>A week later I instrumented the server and swept the packet size, which is the same for every packet including the first: one, two, four and eight codec frames. Each condition sent 60 requests, one at a time, from a 20-prompt voice-agent corpus, on localhost and through the ALB.</p>
+<figure>
+<img alt="Line plot of median time to first audio against 1, 2, 4 and 8 codec frames per first packet, following a straight line of 79.5 plus 28.6 milliseconds per frame. Prefill and unattributed engine time stay near 40 milliseconds; first-packet decode grows linearly." src="https://callumjmac.github.io/medium/qwen-tts-streaming/figure-2.png"/>
+<figcaption>
+<strong>Figure 2.</strong> Median time to first audio (large points; bootstrap 95% CIs are smaller than the markers) against first-packet size, with its linear fit (dashed) and server-side stages, on localhost. First-packet decode accounts for almost all of the growth. Data: <code>ttfa-stages.csv</code>.
+  </figcaption>
+</figure>
+<p>Prefill (38ms) and an unattributed block of engine work (41ms) are fixed costs. First-packet decode costs 27.6ms per frame, and sending the larger packet adds about 1ms per frame. Together they give <strong>TTFA ≈ 79.5ms + 28.6ms × frames</strong>, which matches all four measured medians to within 0.4ms. The 27.6ms agrees with the per-frame cost implied by the full-generation RTF.</p>
+<p>The unattributed 41ms is engine time my timers did not split further; it can include request preparation, waveform decoding and device-to-host copies, and is the next thing to instrument.</p>
+<p>Also from the sweep:</p>
+<ul>
+<li><strong>The ALB is not the bottleneck.</strong> Paired localhost and ALB conditions differed by <strong>0.9 to 1.4ms</strong> at p50.</li>
+<li><strong>The 8ms gap between studies comes from the later setup, not the route or prompt.</strong> The same prompt ("Hello, how are you today?") measured 187ms in the 15 July deployment and 195ms in both later studies, on localhost and through the ALB. Those used a rebuilt image on a different host setup; I have not isolated which change mattered.</li>
+</ul>
+<p>The Qwen3-TTS README advertises "end-to-end synthesis latency as low as 97ms" without stating the hardware, model size, packet size or measurement method. My A10G medians were 187 to 195ms with four-frame packets and 108ms with one-frame packets; without a matching definition, the gap cannot be attributed to implementation or hardware.</p>
+<p>Smaller packets improve onset but cost throughput: streaming RTF rose from 0.45 at four frames to 0.70 at one frame. The <a href="https://callumjmac.github.io/posts/qwen-tts-at-scale/">capacity study</a> tests them under real traffic.</p>
+<h2>What the listener actually waits for</h2>
+<p>TTFA measures the first audio <em>byte</em>, not the first audible word. I measured leading silence in one retained clip per prompt and condition as the time until a 20ms frame's RMS level first exceeds -45 dBFS. Figure 3 also shows vLLM-Omni, the second backend in the <a href="https://callumjmac.github.io/posts/qwen-tts-at-scale/">capacity study</a>.</p>
+<figure>
+<img alt="Panel a: waveform envelope of one clip aligned to the request, with the first byte at 196 milliseconds and the first speech at 620 milliseconds. Panel b: leading silence for 20 prompts per backend, clustered between 420 and 540 milliseconds." src="https://callumjmac.github.io/medium/qwen-tts-streaming/figure-3.png"/>
+<figcaption>
+<strong>Figure 3.</strong> (a) Amplitude envelope of one streamed clip ("assistant" prompt, four-frame packets) aligned to the request. (b) Leading silence for each of the 20 prompts per backend, four-frame packets on localhost; horizontal bars are medians.
+  </figcaption>
+</figure>
+<p>Every clip on both backends opens with <strong>420 to 540ms</strong> of near-silence. The full, non-streamed generations in the next section do too (420 to 480ms), so the silence comes from the model, not streaming. With no client buffer, the first word starts roughly <strong>TTFA + 420ms</strong> after the request: 528ms with one-frame packets and 614ms with the default four.</p>
+<p>That changes the priority: shrinking packets from four frames to one saves 87ms, while the leading silence costs more than four times that on every request.</p>
+<p>Dropping silent leading audio would start playback at the first voiced frame, but the five or six silent frames must still be generated, so the saving would be under 420ms. That is my next experiment.</p>
+<p>For a voice agent, TTS is one part of the turn budget:</p>
+<pre><code class="language-text">turn latency ≈ end-of-speech detection + ASR finalisation
+             + LLM time to first token + text chunking
+             + TTS time to first byte + leading silence
+             + network + client buffer
+</code></pre>
+<p>This post measures only the TTS terms: 108 to 195ms to first byte (one to four frames per packet), about 420ms of silence, and about 1ms of ALB overhead.</p>
+<h2>Does streaming change the audio?</h2>
+<p>I generated ten sentences in full and streamed, then compared:</p>
+<ul>
+<li><strong>Words.</strong> Whisper <code>small.en</code> transcripts matched for all ten pairs, after normalising punctuation.</li>
+<li><strong>Voice.</strong> ECAPA speaker-embedding cosine similarity was <strong>0.994 to 0.998</strong> for nine pairs and 0.81 for one.</li>
+<li><strong>Boundaries.</strong> No chunk-boundary sample jump exceeded the 99th percentile of ordinary sample-to-sample jumps within its clip.</li>
+<li><strong>Waveforms.</strong> Not bit-identical: after alignment, the nine matching pairs had a signal-to-noise ratio of 18.6 to 28.6dB.</li>
+</ul>
+<p>The outlier was "The train arrives at half past seven.", streamed 800ms shorter. It has the same words and leading and trailing silence within 20ms of the full version, so it is a faster rendition, not a truncation: streaming changed the sampled path, and the voice embedding moved with it.</p>
+<p>A typical pair:</p>
+<p><strong>Full generation</strong></p>
+<p><p><a href="https://callumjmac.github.io/audio/qwen-tts/question-full.wav">Listen to this sample</a></p></p>
+<p><strong>Streaming</strong></p>
+<p><p><a href="https://callumjmac.github.io/audio/qwen-tts/question-streamed.wav">Listen to this sample</a></p></p>
+<p>The divergent pair:</p>
+<p><strong>Full generation</strong></p>
+<p><p><a href="https://callumjmac.github.io/audio/qwen-tts/short-statement-full.wav">Listen to this sample</a></p></p>
+<p><strong>Streaming</strong></p>
+<p><p><a href="https://callumjmac.github.io/audio/qwen-tts/short-statement-streamed.wav">Listen to this sample</a></p></p>
+<p>These are objective proxies, not a listening study, but they show streaming preserved the words and, in nine of ten cases, the voice.</p>
+<h2>What this is and is not</h2>
+<p>This is a reproducible, deployable prototype, not a production service.</p>
+<ul>
+<li>Generation is serialised to protect the shared engine; the <a href="https://callumjmac.github.io/posts/qwen-tts-at-scale/">capacity study</a> found this meets the latency SLO at only one active request per replica.</li>
+<li>Voice references are ephemeral.</li>
+<li>The test ALB used plain HTTP/WebSocket with no authentication.</li>
+<li>Disconnecting stops delivery to the client, but I have not shown it cancels in-flight GPU work immediately.</li>
+<li>Leading silence is untrimmed.</li>
+</ul>
+<h2>Try it</h2>
+<pre><code class="language-bash">git clone https://github.com/CallumJMac/qwen-tts-serve.git
+cd qwen-tts-serve
+uv sync --extra cuda --extra dev
+
+QWEN_TTS_ENGINE=faster uv run uvicorn qwen_tts_serve.server:app \
+  --host 0.0.0.0 --port 8000
+uv run python scripts/stream_demo.py "Hello world"
+</code></pre>
+<p>The streaming path needs an NVIDIA CUDA machine. Every number and figure here is generated from the retained per-request records by <a href="https://github.com/CallumJMac/qwen-tts-serve/tree/main/experiments/blog_analysis"><code>experiments/blog_analysis</code></a> in the same repository, which needs no GPU.</p>
+<hr><p><em>Originally published at <a href="https://callumjmac.github.io/posts/qwen-tts-streaming/">callumjmac.github.io</a>. Figures, code and data are linked from the original post.</em></p>
+</article>
+</body>
+</html>

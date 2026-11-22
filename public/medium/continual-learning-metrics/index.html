@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Continual Learning: Which metrics are important?</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Ranking the most valuable metrics for monitoring deployed ML models, from user feedback to distribution drift.">
+<link rel="canonical" href="https://callumjmac.github.io/posts/continual-learning-metrics/">
+</head>
+<body>
+<article>
+<h1>Continual Learning: Which metrics are important?</h1>
+<p><em>Ranking the most valuable metrics for monitoring deployed ML models, from user feedback to distribution drift.</em></p>
+<p>One of the hardest questions in the lifecycle of a deployed machine learning model is: "when do I need to retrain my model?". The answer comes from monitoring and observability: detecting when the model is no longer performing well on production data. The key questions to ask yourself as an ML Engineer are:</p>
+<ul>
+<li>Which metrics actually matter?</li>
+<li>How can we use these metrics to debug issues with the model?</li>
+<li>As we get confidence in which metrics are useful, how can we automate this?</li>
+</ul>
+<p>There are no settled standards for model monitoring yet. The main principles to follow are:</p>
+<ol>
+<li>Alert on metrics that indicate the system is breaking.</li>
+<li>Calculate other metrics too, but use them for observability and debugging.</li>
+</ol>
+<h2>Which metrics to monitor?</h2>
+<p>Choosing the right metrics is the most important decision in setting up useful monitoring. Here are the types of metrics, ranked from most to least valuable:</p>
+<ol>
+<li>Outcomes and feedback from users</li>
+<li>Model performance metrics</li>
+<li>Proxy metrics</li>
+<li>Data quality</li>
+<li>Distribution drift</li>
+<li>System metrics</li>
+</ol>
+<h3>Outcomes and Feedback from users</h3>
+<p>The most valuable signal is outcome data and feedback from your users. There is no universal approach to collecting it, because it depends on the product. It is essentially a product design problem: building the product so that feedback is captured naturally as part of the user experience.</p>
+<h3>Model Performance Metrics</h3>
+<p>Next are model performance metrics such as accuracy. They are less informative than user feedback because the metric you optimise is rarely the outcome you care about. Many practitioners have found that improving a model metric leaves product outcomes unchanged, or even makes them worse. That is no excuse to ignore them, though. Measuring performance in production requires labels, so budget for labelling production data regularly, for example through an on-call rotation or periodic labelling sessions. This shows you how the model's performance changes over time.</p>
+<h3>Proxy Metrics</h3>
+<p>Proxy metrics are signals that correlate with poor model performance but do not need labels. They are usually domain-specific. For a language model generating text, the rate of repetitive or toxic outputs is a useful proxy. In a recommender system, the proportion of personalised recommendations can be indicative. Known failure modes also work as proxies: if your model repeatedly fails on a particular kind of edge case, a rise in how often that case occurs may signal degraded performance.</p>
+<p>There is growing research interest in estimating performance metrics on unlabelled production data. Approaches range from training auxiliary models that predict your primary model's performance, to heuristics and human-in-the-loop techniques.</p>
+<p>However, no method can estimate performance reliably under every kind of distribution shift. For instance, if the relationship between inputs and labels changes (concept drift), the inputs alone may look unchanged, so any estimate that sees only unlabelled data can miss the degradation entirely.</p>
+<h3>Data Quality</h3>
+<p>In practice, many production ML failures come from the data and the pipeline around the model rather than the model itself. In this <a href="https://www.usenix.org/conference/opml20/presentation/papasian">Google talk at USENIX OpML '20</a>, which reviewed roughly a decade of outages in one of Google's largest ML pipelines, most outages were not ML-specific: they stemmed from the surrounding, distributed data pipeline. Checking data quality (missing values, schema changes, out-of-range values, stale or delayed data) is cheap and catches many of these failures.</p>
+<h3>Distribution Drift</h3>
+<h4>Why measure distribution drift?</h4>
+<ul>
+<li>Performance measured at validation time only holds for data drawn from the same distribution the model was trained and evaluated on.</li>
+<li>Inputs that are rare or absent in training data can have serious consequences, for example the <a href="https://cbsaustin.com/news/spotlight-on-america/responders-at-risk-nhtsa-probes-driver-assistance-systems-after-a-series-of-crashes-involving-teslas-and-emergency-vehicles">series of Tesla Autopilot crashes into emergency vehicles investigated by NHTSA</a>.</li>
+</ul>
+<p>It also helps to be clear about what has shifted. <em>Covariate drift</em> is a change in the input distribution P(x). <em>Label drift</em> is a change in P(y). <em>Concept drift</em> is a change in P(y|x), the relationship the model has learned. Input drift does not always hurt performance, and concept drift can hurt performance without any visible change in the inputs.</p>
+<h4>Types of Distribution Drift:</h4>
+<ul>
+<li><em>Instantaneous</em>: occurs with a move to a new domain, pipeline bugs, or major external shocks (a pandemic, a war).</li>
+<li><em>Gradual</em>: reflects evolving user preferences or new concepts over time (e.g. <a href="https://www.joe.co.uk/food/mayonnaise-has-overtaken-ketchup-as-britains-most-popular-condiment-141342">mayonnaise overtaking ketchup as Britain's most popular condiment</a>; not an ML example, but it shows how preferences shift in a population).</li>
+<li><em>Periodic</em>: arises from seasonal patterns, or from users in different time zones and regions behaving differently (e.g. ice cream sales are higher in summer than in winter).</li>
+<li><em>Temporary</em>: caused by malicious attacks, a new type of user, or unintended usage patterns (e.g. the Do Anything Now (DAN) jailbreak prompts used against ChatGPT).</li>
+</ul>
+<h4>How to measure it:</h4>
+<ul>
+<li>Select a "good" reference window of data, typically validation data or a period of production data where the model performed well.</li>
+<li>Choose a recent window of production data and compare the two distributions using a distance metric.</li>
+</ul>
+<h4>Metrics to use:</h4>
+<ul>
+<li>For one-dimensional data, estimate the distribution of the feature (e.g. a histogram) in each window and compare them with a distance such as the L-infinity distance, the L1 distance (equivalent to twice the total variation distance), or the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wasserstein_distance.html">earth mover's (Wasserstein-1) distance</a>. These give an interpretable magnitude of shift that you can threshold.</li>
+<li>Be careful with hypothesis tests such as the two-sample Kolmogorov-Smirnov (KS) or chi-squared tests. Their p-values measure how confident you can be that the distributions differ at all, not how large the difference is. With lots of data, tiny and harmless shifts produce very small p-values, so it is hard to pick a threshold that corresponds to degraded model performance. The KS statistic itself (the maximum gap between the two empirical CDFs) is still a usable distance. KL divergence is not a test and returns no p-value, but it has its own problems: it is asymmetric, unbounded, and infinite when the new data has mass where the reference has none, so it needs binning and smoothing to be stable. Further details can be found in <a href="https://web.archive.org/web/20241010111802/https://www.gantry.io/blog/youre-probably-monitoring-your-models-wrong">this Gantry post</a>.</li>
+<li>For high-dimensional data, consider multivariate methods like <a href="https://jmlr.csail.mit.edu/papers/v13/gretton12a.html">maximum mean discrepancy</a> (powerful, but hard to interpret), or project the data to lower dimensions and apply the one-dimensional metrics above. Projections can be analytical (e.g. mean pixel value, sentence length, or any other function of the input), random (e.g. random linear projections), or learned (e.g. an autoencoder's latent space, PCA, or a model's own embeddings).</li>
+</ul>
+<h4>Challenges:</h4>
+<ul>
+<li>Models can be robust to some degree of distribution drift.</li>
+<li>In practice, measuring drift requires careful choices of window size, data retention, metric, and projections.</li>
+</ul>
+<h3>System Metrics</h3>
+<p>These tell you nothing about the quality of the model's predictions, but they can tell you when something is going wrong. Monitor latency, throughput and error rates, and track CPU utilisation and GPU memory usage to make sure you are using the resources you pay for.</p>
+<hr><p><em>Originally published at <a href="https://callumjmac.github.io/posts/continual-learning-metrics/">callumjmac.github.io</a>. Figures, code and data are linked from the original post.</em></p>
+</article>
+</body>
+</html>
