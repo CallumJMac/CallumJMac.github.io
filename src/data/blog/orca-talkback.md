@@ -88,7 +88,7 @@ Your voice is not in the reference, so it survives cancellation, and about 160 m
 
 A voice that talks while you read something else is worse than none, so orca-talkback only speaks when:
 
-1. **Orca is the app in front.** It checks twice a second, so switching to your browser cuts it off.
+1. **An Orca window is visible.** It checks twice a second: Orca on a second screen counts while you type in another app, but Orca minimised, hidden or buried under your browser cuts it off.
 2. **The agent is on screen.** That is the workspace picked in Orca's sidebar, or the chat you just prompted. Orca does not tell plugins which chat is visible, so prompting a chat is the most reliable sign you are looking at it.
 
 Other replies are never spoken, or replayed later.
