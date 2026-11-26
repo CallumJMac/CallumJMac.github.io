@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2024-04-16T00:00:00Z
-modDatetime: 2026-11-22T00:00:00Z
 title: "Continual Learning: Which metrics are important?"
 slug: continual-learning-metrics
 description: "Ranking the most valuable metrics for monitoring deployed ML models, from user feedback to distribution drift."

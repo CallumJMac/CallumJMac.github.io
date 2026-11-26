@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2026-11-21T00:00:00Z
-modDatetime: 2026-11-22T00:00:00Z
 title: "Making My Coding Agents Talk Back"
 slug: orca-talkback
 featured: true

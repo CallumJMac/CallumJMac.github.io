@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2024-04-22T00:00:00Z
-modDatetime: 2026-11-22T00:00:00Z
 title: "Malicious LLM Prompt Detection in Python"
 slug: malicious-llm-prompt-detection
 description: "Building a malicious prompt detector using traditional ML classifiers in sklearn, trained on Deepset's prompt-injection dataset."

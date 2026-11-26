@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2024-04-24T00:00:00Z
-modDatetime: 2026-11-22T00:00:00Z
 title: "Implementing RAG in LangChain with Chroma: A Step-by-Step Guide"
 slug: rag-langchain-intro
 description: "A step-by-step guide to building a Retrieval-Augmented Generation system using LangChain, Chroma, and OpenAI embeddings."

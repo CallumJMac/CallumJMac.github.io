@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2024-05-07T00:00:00Z
-modDatetime: 2026-11-22T00:00:00Z
 title: "LLM Evals: A General Framework for Custom Evaluations"
 slug: llm-evals-framework
 description: "A general framework for building rule-based and model-graded evaluations for LLM-based applications."

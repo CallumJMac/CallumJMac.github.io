@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2024-05-21T00:00:00Z
-modDatetime: 2026-11-22T00:00:00Z
 title: "Advanced Retrieval for Retrieval-Augmented Generation"
 slug: advanced-retrieval-rag
 description: "Query expansion, cross-encoder re-ranking, and embedding adaptors for improving RAG retrieval quality."

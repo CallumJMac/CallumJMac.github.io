@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2026-07-17T00:00:00Z
-modDatetime: 2026-11-22T00:00:00Z
 title: "Capacity Planning Qwen3-TTS on an A10G"
 slug: qwen-tts-at-scale
 featured: true

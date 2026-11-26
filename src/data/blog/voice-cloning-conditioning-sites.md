@@ -1,6 +1,5 @@
 ---
 pubDatetime: 2026-11-21T12:00:00Z
-modDatetime: 2026-11-22T12:00:00Z
 title: "Where Does a Cloned Voice Live? Prompts and Speaker Embeddings in Zero-Shot TTS"
 slug: voice-cloning-conditioning-sites
 featured: true
