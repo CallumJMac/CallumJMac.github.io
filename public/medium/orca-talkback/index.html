@@ -49,7 +49,7 @@
 <li><strong>An Orca window is visible.</strong> It checks twice a second: Orca on a second screen counts while you type in another app, but Orca minimised, hidden or buried under your browser cuts it off.</li>
 <li><strong>The agent is on screen.</strong> That is the workspace picked in Orca's sidebar, or the chat you just prompted. Orca does not tell plugins which chat is visible, so prompting a chat is the most reliable sign you are looking at it.</li>
 </ol>
-<p>Other replies are never spoken, or replayed later.</p>
+<p>A reply you miss is not lost: if it finished while Orca was hidden, or while you were on another workspace, it plays once when you come back, within ten minutes and as long as the agent has not started working again.</p>
 <h2>Choosing a voice</h2>
 <p>To pick a voice, I compared the open models on Hugging Face's <a href="https://huggingface.co/spaces/hf-audio/open_tts_leaderboard">Open TTS Leaderboard</a>:</p>
 <img alt="Model Naturalness (UTMOS) Word error rate Size License Kokoro-82M 4.50 0.76% 82M Apache-2.0 Inflect-Mini-v3 4.48 0.76% 34M Apache-2.0 Reverb-TTS 4.45 0.65% 297M CC-BY-NC-4.0 Chatterbox 4.40 1.00% 800M MIT" src="https://callumjmac.github.io/medium/orca-talkback/table-1.png"/>
